@@ -1,0 +1,1461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Text UI Simulator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── PALETTE: Pure Black / Dark Gray / Mid Gray / Off White ── */
+    :root {
+      --bg:      #000000;
+      --panel:   #0d0d0d;
+      --card:    #1a1a1a;
+      --card2:   #222222;
+      --sel-bg:  #1c1c1c;
+      --b:       rgba(255,255,255,0.1);
+      --b2:      rgba(255,255,255,0.2);
+      --accent:  #CDCDCD;
+      --abright: #BDBDBD;
+      --aglow:   rgba(200,200,200,0.18);
+      --blue:    #2563eb;
+      --blueb:   #3b82f6;
+      --t1:      #F5F5F5;   /* Off White  */
+      --t2:      #787878;   /* Mid Gray   */
+      --t3:      #4A4A4A;   /* Dark Gray  */
+      --hh:  56px;
+      --sw:  284px;
+      --fh:  62px;
+    }
+
+    html, body { height: 100%; overflow: hidden; font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--t1); font-size: 13px; line-height: 1; }
+    #app { display: flex; flex-direction: column; height: 100vh; }
+
+    /* ── HEADER ── */
+    .hdr {
+      height: var(--hh); background: #000;
+      border-bottom: 1px solid var(--b);
+      display: flex; align-items: center; padding: 0 20px; gap: 16px;
+      flex-shrink: 0; z-index: 100;
+    }
+    .brand h1 { font-size: 16px; font-weight: 800; color: var(--t1); letter-spacing: -0.2px; }
+    .brand p  { font-size: 9px; font-weight: 500; color: var(--t3); letter-spacing: 2px; text-transform: uppercase; margin-top: 3px; }
+
+    .mode-toggle {
+      margin-left: auto;
+      display: flex; background: var(--card); border: 1px solid var(--b); border-radius: 8px; overflow: hidden;
+    }
+    .mode-btn {
+      padding: 7px 18px; font-size: 12px; font-weight: 600;
+      color: var(--t2); cursor: pointer; border: none;
+      background: transparent; font-family: inherit; transition: all 0.2s;
+    }
+    .mode-btn.on { background: var(--accent); color: #1a1a1a; }
+
+    .hdr-actions { display: flex; gap: 8px; }
+    .btn-gen {
+      background: var(--accent); color: #1a1a1a; border: none;
+      padding: 8px 18px; border-radius: 8px; font-size: 12px; font-weight: 600;
+      cursor: pointer; font-family: inherit;
+      display: flex; align-items: center; gap: 6px; transition: all 0.2s;
+    }
+    .btn-gen:hover { background: var(--abright); box-shadow: 0 4px 20px var(--aglow); }
+    .btn-dl {
+      background: var(--card); color: var(--t2); border: 1px solid var(--b);
+      padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: 500;
+      cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 5px;
+      transition: color 0.15s;
+    }
+    .btn-dl:hover { color: var(--t1); }
+
+    /* ── MAIN ── */
+    .main { flex: 1; display: flex; overflow: hidden; min-height: 0; }
+
+    /* ── SIDEBAR ── */
+    .sb {
+      width: var(--sw); flex-shrink: 0;
+      background: var(--panel); border-right: 1px solid var(--b);
+      overflow-y: auto; overflow-x: hidden;
+      scrollbar-width: thin; scrollbar-color: var(--b) transparent;
+    }
+    .sb::-webkit-scrollbar { width: 3px; }
+    .sb::-webkit-scrollbar-thumb { background: var(--b); }
+
+    .sec { border-bottom: 1px solid var(--b); padding: 13px 13px; }
+    .sec-title { font-size: 9px; font-weight: 700; color: var(--t3); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 10px; }
+
+    /* Format cards */
+    .fmt-card {
+      display: flex; align-items: center; gap: 11px;
+      padding: 9px 11px; border-radius: 8px; border: 1px solid var(--b);
+      cursor: pointer; margin-bottom: 5px; background: var(--card); transition: all 0.15s;
+    }
+    .fmt-card:last-child { margin-bottom: 0; }
+    .fmt-card.on { border-color: rgba(255,255,255,0.45); background: var(--sel-bg); }
+    .fmt-ico {
+      width: 34px; height: 34px; border-radius: 7px;
+      background: var(--card2); display: flex; align-items: center; justify-content: center;
+      font-size: 15px; flex-shrink: 0;
+    }
+    .fmt-card.on .fmt-ico { background: #2a2a2a; }
+    .fmt-txt h3 { font-size: 12px; font-weight: 600; color: var(--t1); }
+    .fmt-txt p  { font-size: 10px; color: var(--t2); margin-top: 1px; }
+
+    /* Background selector */
+    .bg-swatches { display: flex; gap: 8px; align-items: center; }
+    .bg-sw {
+      width: 28px; height: 28px; border-radius: 50%;
+      cursor: pointer; border: 2px solid transparent;
+      transition: all 0.15s; flex-shrink: 0;
+      position: relative;
+    }
+    .bg-sw.on { border-color: var(--t1); transform: scale(1.15); }
+    .bg-sw:hover:not(.on) { border-color: var(--t2); }
+    .bg-sw-dark  { background: radial-gradient(circle, #1a0a2e 0%, #000 100%); }
+    .bg-sw-black { background: #000000; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.15); }
+    .bg-sw-white { background: #FFFFFF; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.2); }
+    .bg-sw-green { background: #00b140; }
+    .bg-sw-label { font-size: 9px; color: var(--t3); }
+
+    /* Speaker cards */
+    .spk-card {
+      background: var(--card); border: 1px solid var(--b); border-radius: 8px;
+      padding: 10px 11px; margin-bottom: 7px;
+    }
+    .spk-card:last-child { margin-bottom: 0; }
+    .spk-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+
+    .av-wrap { position: relative; cursor: pointer; flex-shrink: 0; }
+    .av-circle {
+      width: 40px; height: 40px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 700; color: #fff; overflow: hidden;
+      border: 2px solid transparent; transition: border-color 0.2s;
+    }
+    .av-wrap:hover .av-circle { border-color: var(--t2); }
+    .av-circle img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+    .av-hint {
+      position: absolute; inset: 0; border-radius: 50%;
+      background: rgba(0,0,0,0.6); display: flex; align-items: center;
+      justify-content: center; font-size: 13px; opacity: 0; transition: opacity 0.2s;
+    }
+    .av-wrap:hover .av-hint { opacity: 1; }
+    .av-file { display: none; }
+
+    .spk-info { flex: 1; min-width: 0; }
+    .spk-name-inp {
+      background: transparent; border: none;
+      color: var(--t1); font-size: 13px; font-weight: 600;
+      font-family: inherit; width: 100%; outline: none;
+    }
+    .spk-name-inp:focus { color: var(--abright); }
+    .spk-sub { font-size: 10px; color: var(--t2); margin-top: 2px; }
+
+    .upload-btn {
+      background: var(--card2); border: 1px dashed rgba(255,255,255,0.1);
+      color: var(--t2); padding: 5px 10px; border-radius: 5px;
+      font-size: 10px; font-weight: 500; cursor: pointer; font-family: inherit;
+      display: flex; align-items: center; justify-content: center; gap: 5px;
+      width: 100%; transition: all 0.15s;
+    }
+    .upload-btn:hover { border-color: var(--t2); color: var(--t1); }
+
+    /* Message list */
+    .msg-list { display: flex; flex-direction: column; gap: 3px; max-height: 240px; overflow-y: auto; margin-bottom: 6px; }
+    .msg-list::-webkit-scrollbar { width: 2px; }
+
+    .mi {
+      display: flex; align-items: center; gap: 5px;
+      background: var(--card); border: 1px solid var(--b);
+      border-radius: 6px; padding: 5px 7px; transition: border-color 0.15s;
+    }
+    .mi:focus-within { border-color: var(--t2); }
+
+    .mi-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .d-left  { background: var(--t3); }
+    .d-right { background: var(--blue); }
+
+    .mi-sel {
+      background: transparent; border: none; color: var(--t2);
+      font-size: 10px; font-family: inherit; cursor: pointer; outline: none;
+      flex-shrink: 0; padding: 1px 2px;
+    }
+    .mi-sel.r { color: var(--blueb); }
+    .mi-inp {
+      flex: 1; background: transparent; border: none;
+      color: var(--t1); font-size: 11px; font-family: inherit; outline: none;
+    }
+    .mi-del {
+      background: none; border: none; cursor: pointer;
+      color: var(--t3); font-size: 12px; line-height: 1;
+      transition: color 0.15s; flex-shrink: 0;
+    }
+    .mi-del:hover { color: #ef4444; }
+
+    .add-btn {
+      background: var(--card); border: 1px dashed rgba(255,255,255,0.15);
+      color: var(--t2); padding: 7px; border-radius: 6px;
+      font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit;
+      width: 100%; text-align: center; transition: all 0.15s;
+    }
+    .add-btn:hover { border-color: var(--t1); color: var(--t1); background: var(--card2); }
+
+    /* Toggles */
+    .tog-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 7px 0; border-bottom: 1px solid var(--b);
+    }
+    .tog-row:last-child { border-bottom: none; }
+    .tog-label h4 { font-size: 12px; font-weight: 500; color: var(--t1); }
+    .tog-label p  { font-size: 10px; color: var(--t2); }
+
+    .tog {
+      width: 36px; height: 20px; border-radius: 10px;
+      background: var(--card2); border: 1px solid var(--b);
+      position: relative; cursor: pointer; flex-shrink: 0; transition: all 0.25s;
+    }
+    .tog.on { background: var(--accent); border-color: var(--accent); }
+    .tog-k {
+      position: absolute; top: 2px; left: 2px;
+      width: 14px; height: 14px; border-radius: 50%;
+      background: #fff; transition: transform 0.25s, background 0.25s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    }
+    .tog.on .tog-k { transform: translateX(16px); background: #333; }
+
+    /* ── PREVIEW CENTER ── */
+    .pv-center { flex: 1; overflow: hidden; position: relative; }
+
+    /* ── PHONE VIEW ── */
+    #phoneView {
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.4s ease;
+    }
+    /* background themes */
+    #phoneView.bg-dark, #closeupView.bg-dark {
+      background:
+        radial-gradient(ellipse at 18% 62%, rgba(255,75,18,.13) 0%, transparent 48%),
+        radial-gradient(ellipse at 82% 24%, rgba(100,28,220,.18) 0%, transparent 44%),
+        radial-gradient(ellipse at 58% 82%, rgba(0,140,255,.1) 0%, transparent 38%),
+        linear-gradient(180deg,#020208 0%,#060312 55%,#020208 100%);
+    }
+    #phoneView.bg-black, #closeupView.bg-black { background: #000000; }
+    #phoneView.bg-white, #closeupView.bg-white { background: #FFFFFF; }
+    #phoneView.bg-green, #closeupView.bg-green { background: #00b140; }
+
+    .p-shell {
+      filter: drop-shadow(0 40px 80px rgba(0,0,0,.92)) drop-shadow(0 0 80px rgba(0,0,0,.5));
+      transform: scale(1.18);
+      transform-origin: center center;
+    }
+
+    /* ── PHONE BODY (+20% from 294×600) ── */
+    .p-body {
+      width: 353px; height: 720px; background: #0c0c10;
+      border-radius: 62px; border: 2px solid #28282e;
+      position: relative; overflow: hidden;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.04);
+    }
+    .p-body::before {
+      content:''; position:absolute; left:-4px; top:142px;
+      width:3px; height:38px; background:#222230; border-radius:2px 0 0 2px;
+      box-shadow: 0 53px 0 #222230;
+    }
+    .p-body::after {
+      content:''; position:absolute; right:-4px; top:156px;
+      width:3px; height:77px; background:#222230; border-radius:0 2px 2px 0;
+    }
+
+    .p-screen {
+      position:absolute; inset:2px; border-radius:60px;
+      overflow:hidden; background:#000; display:flex; flex-direction:column;
+    }
+
+    .p-di {
+      position:absolute; top:14px; left:50%; transform:translateX(-50%);
+      width:118px; height:31px; background:#000; border-radius:17px;
+      z-index:10; border:1px solid #1a1a22; transition:width .4s;
+    }
+    .p-di.big { width:180px; }
+
+    .p-status {
+      height:62px; display:flex; align-items:flex-end;
+      justify-content:space-between; padding:0 24px 9px;
+      flex-shrink:0; position:relative; z-index:5;
+    }
+    .p-status .t { font-size:14px; font-weight:600; color:#fff; }
+    .p-status .ic { display:flex; gap:5px; align-items:center; font-size:12px; color:#fff; }
+
+    .p-hdr {
+      display:flex; align-items:center; padding:0 20px; height:70px; gap:12px;
+      background:rgba(5,5,10,.97); border-bottom:1px solid rgba(255,255,255,.06);
+      flex-shrink:0; z-index:5;
+    }
+    .p-back { font-size:20px; color:#3b82f6; }
+
+    .p-hdr-av {
+      width:44px; height:44px; border-radius:50%; flex-shrink:0; overflow:hidden;
+      display:flex; align-items:center; justify-content:center;
+      font-size:15px; font-weight:700; color:#fff;
+    }
+    .p-hdr-av img { width:100%; height:100%; object-fit:cover; }
+
+    .p-contact { flex:1; }
+    .p-contact .cn { font-size:16px; font-weight:600; color:#fff; }
+    .p-contact .cs { font-size:11px; color:rgba(255,255,255,.45); margin-top:2px; }
+    .p-hdr-ic { display:flex; gap:16px; font-size:20px; color:#3b82f6; }
+
+    .p-msgs {
+      flex:1; overflow:hidden; padding:12px 14px;
+      display:flex; flex-direction:column; gap:8px; background:#000;
+    }
+    .p-date { text-align:center; font-size:11px; color:rgba(255,255,255,.28); margin:2px 0 4px; }
+
+    .p-row { display:flex; gap:8px; align-items:flex-end; }
+    .p-row.r { flex-direction:row-reverse; }
+
+    .p-av-sm {
+      width:32px; height:32px; border-radius:50%; flex-shrink:0; overflow:hidden;
+      display:flex; align-items:center; justify-content:center;
+      font-size:12px; font-weight:700; color:#fff;
+    }
+    .p-av-sm img { width:100%; height:100%; object-fit:cover; }
+
+    .p-bwrap { display:flex; flex-direction:column; gap:2px; max-width:76%; }
+    .p-sname { font-size:10px; color:rgba(255,255,255,.3); padding:0 3px; }
+    .p-row.r .p-sname { text-align:right; }
+
+    .p-bub {
+      padding:11px 16px; border-radius:22px; font-size:15px; line-height:1.45;
+    }
+    .p-bub.l { background:#E9E9E9; color:#1a1a1a; border-bottom-left-radius:4px; }
+    .p-bub.r { background:#2563eb; color:#fff;    border-bottom-right-radius:4px; }
+
+    .p-meta { font-size:10px; color:rgba(255,255,255,.28); padding:0 3px; }
+    .p-row.r .p-meta { text-align:right; }
+
+    .p-input {
+      height:70px; display:flex; align-items:center; padding:0 14px; gap:10px;
+      background:rgba(5,5,10,.97); border-top:1px solid rgba(255,255,255,.06); flex-shrink:0;
+    }
+    .p-add { width:34px; height:34px; border-radius:50%; background:#1a1a28; border:1px solid rgba(255,255,255,.1); display:flex; align-items:center; justify-content:center; font-size:18px; color:#3b82f6; flex-shrink:0; }
+    .p-field { flex:1; height:40px; border-radius:20px; background:#1a1a28; border:1px solid rgba(255,255,255,.07); display:flex; align-items:center; padding:0 16px; font-size:14px; color:rgba(255,255,255,.3); }
+    .p-mic { font-size:18px; color:#3b82f6; flex-shrink:0; }
+
+    /* group avatar cluster in phone header */
+    .p-grp-avs { position:relative; width:44px; height:44px; flex-shrink:0; }
+    .p-hdr-av-sm {
+      width:28px; height:28px; border-radius:50%; position:absolute;
+      overflow:hidden; display:flex; align-items:center; justify-content:center;
+      font-size:10px; font-weight:700; color:#fff; border:2px solid #0c0c10;
+    }
+    .p-hdr-av-sm:nth-child(1) { top:0; left:0; z-index:2; }
+    .p-hdr-av-sm:nth-child(2) { bottom:0; right:0; z-index:1; }
+    .p-hdr-av-sm img { width:100%; height:100%; object-fit:cover; }
+
+    /* per-message delay control */
+    .mi-delay-wrap { font-size:10px; color:var(--t3); display:flex; align-items:center; gap:1px; flex-shrink:0; white-space:nowrap; }
+    .mi-delay {
+      width:30px; background:transparent; border:none; color:var(--t2);
+      font-size:10px; font-family:inherit; outline:none; text-align:center;
+      -moz-appearance:textfield;
+    }
+    .mi-delay::-webkit-outer-spin-button,
+    .mi-delay::-webkit-inner-spin-button { -webkit-appearance:none; }
+    .mi-delay:focus { color:var(--t1); }
+
+    /* per-message time stamp control */
+    .mi-time-wrap { font-size:10px; color:var(--t3); display:flex; align-items:center; gap:1px; flex-shrink:0; }
+    .mi-time {
+      width:48px; background:transparent; border:none; color:var(--t2);
+      font-size:10px; font-family:inherit; outline:none; text-align:center;
+    }
+    .mi-time:focus { color:var(--t1); }
+
+    /* speaker delete button */
+    .spk-del {
+      background:none; border:none; cursor:pointer; color:var(--t3);
+      font-size:14px; line-height:1; transition:color 0.15s; flex-shrink:0; padding:4px;
+    }
+    .spk-del:hover { color:#ef4444; }
+
+    /* typing (shared) */
+    .typ-row { display:flex; gap:8px; align-items:flex-end; }
+    .typ-bub { padding:11px 16px; border-radius:22px; border-bottom-left-radius:4px; background:#E9E9E9; display:flex; gap:5px; align-items:center; }
+    .d { width:6px; height:6px; border-radius:50%; background:rgba(0,0,0,.25); animation:db 1.2s ease-in-out infinite; }
+    .d:nth-child(2) { animation-delay:.2s; }
+    .d:nth-child(3) { animation-delay:.4s; }
+    @keyframes db { 0%,80%,100%{transform:translateY(0);opacity:.4} 40%{transform:translateY(-5px);opacity:1} }
+
+    /* ── PHONE UI LIGHT MODE ── */
+    .p-body.ui-light .p-screen   { background:#f2f2f7; }
+    .p-body.ui-light .p-di       { background:#f2f2f7; border-color:#c8c8cc; }
+    .p-body.ui-light .p-status .t,
+    .p-body.ui-light .p-status .ic { color:#000; }
+    .p-body.ui-light .p-hdr      { background:rgba(242,242,247,.97); border-bottom-color:rgba(0,0,0,.08); }
+    .p-body.ui-light .p-back     { color:#007aff; }
+    .p-body.ui-light .p-contact .cn { color:#000; }
+    .p-body.ui-light .p-contact .cs { color:rgba(0,0,0,.45); }
+    .p-body.ui-light .p-msgs     { background:#fff; }
+    .p-body.ui-light .p-date     { color:rgba(0,0,0,.35); }
+    .p-body.ui-light .p-sname    { color:rgba(0,0,0,.4); }
+    .p-body.ui-light .p-meta     { color:rgba(0,0,0,.35); }
+    .p-body.ui-light .p-input    { background:rgba(242,242,247,.97); border-top-color:rgba(0,0,0,.08); }
+    .p-body.ui-light .p-add      { background:#e5e5ea; border-color:rgba(0,0,0,.08); color:#007aff; }
+    .p-body.ui-light .p-field    { background:#e5e5ea; border-color:rgba(0,0,0,.07); color:rgba(0,0,0,.3); }
+
+    /* ── CLOSE-UP VIEW ── */
+    #closeupView {
+      width:100%; height:100%;
+      display:flex; flex-direction:column; justify-content:center;
+      padding:36px 80px; gap:0; overflow:hidden;
+    }
+
+    .cu-grp { display:flex; gap:14px; align-items:flex-end; margin-bottom:20px; }
+    .cu-grp.r { flex-direction:row-reverse; }
+    .cu-grp:last-child { margin-bottom:0; }
+
+    .cu-av {
+      width:46px; height:46px; border-radius:50%; flex-shrink:0; overflow:hidden;
+      display:flex; align-items:center; justify-content:center;
+      font-size:16px; font-weight:700; color:#fff; align-self:flex-end;
+    }
+    .cu-av img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+
+    .cu-col { display:flex; flex-direction:column; gap:4px; max-width:58%; }
+    .cu-grp.r .cu-col { align-items:flex-end; }
+
+    .cu-who { font-size:11px; font-weight:500; color:var(--t3); margin-bottom:2px; }
+
+    .cu-bub {
+      padding:14px 20px; border-radius:24px; font-size:17px; line-height:1.5;
+      display:inline-block;
+    }
+    .cu-bub.l { background:#E9E9E9; color:#1a1a1a; border-bottom-left-radius:5px; }
+    .cu-bub.r { background:#2563eb; color:#fff;   border-bottom-right-radius:5px; }
+
+    .cu-meta { font-size:10px; color:var(--t3); display:flex; gap:6px; align-items:center; }
+    .cu-grp.r .cu-meta { flex-direction:row-reverse; }
+
+    .cu-typ-grp { display:flex; gap:14px; align-items:flex-end; margin-bottom:20px; }
+    .cu-typ-bub { padding:12px 18px; border-radius:22px; border-bottom-left-radius:5px; background:#E9E9E9; display:flex; gap:5px; align-items:center; }
+
+    /* pop-in */
+    @keyframes pop { 0%{transform:scale(.72) translateY(9px);opacity:0} 65%{transform:scale(1.04) translateY(-2px)} 100%{transform:scale(1) translateY(0);opacity:1} }
+    .pop { animation:pop .3s cubic-bezier(.34,1.56,.64,1) forwards; }
+
+    /* ── FOOTER ── */
+    .foot {
+      height:var(--fh); background:var(--panel);
+      border-top:1px solid var(--b);
+      display:flex; align-items:center; padding:0 20px; gap:20px; flex-shrink:0;
+    }
+    .foot-lbl { font-size:9px; font-weight:700; color:var(--t3); text-transform:uppercase; letter-spacing:1px; }
+    .foot-grp { display:flex; align-items:center; gap:7px; }
+    .foot-grp span { font-size:10px; color:var(--t3); }
+    .foot-sel {
+      background:var(--card); border:1px solid var(--b); color:var(--t1);
+      padding:6px 10px; border-radius:6px; font-size:12px; font-family:inherit;
+      cursor:pointer; outline:none;
+    }
+    .foot-sel:focus { border-color:var(--t2); }
+    .foot-note { margin-left:auto; font-size:10px; color:var(--t3); text-align:right; line-height:1.5; }
+    .rnd-btn {
+      background:var(--accent); color:#1a1a1a; border:none;
+      padding:10px 22px; border-radius:8px; font-size:13px; font-weight:600;
+      cursor:pointer; font-family:inherit;
+      display:flex; align-items:center; gap:7px; transition:all .2s;
+    }
+    .rnd-btn:hover { background:var(--abright); box-shadow:0 4px 20px var(--aglow); }
+
+    /* toast */
+    .toast {
+      position:fixed; bottom:80px; right:20px;
+      background:var(--card); border:1px solid var(--t3); color:var(--t1);
+      padding:9px 15px; border-radius:8px; font-size:12px; font-weight:500;
+      box-shadow:0 8px 24px rgba(0,0,0,.7);
+      transform:translateY(40px); opacity:0; transition:all .3s; z-index:1000;
+    }
+    .toast.show { transform:translateY(0); opacity:1; }
+
+    select option { background:#1a1a1a; }
+    ::-webkit-scrollbar { width:3px; }
+    ::-webkit-scrollbar-thumb { background:rgba(255,255,255,.1); border-radius:2px; }
+
+    /* ── SIDEBAR RESIZE ── */
+    .sb { position:relative; }
+    .sb-handle {
+      position:absolute; top:0; right:-3px; bottom:0; width:6px;
+      cursor:col-resize; z-index:10; background:transparent; transition:background .2s;
+    }
+    .sb-handle:hover, .sb-handle.dragging { background:rgba(255,255,255,.18); }
+
+    /* ── TIME PICKER POPUP ── */
+    #tpOverlay { position:fixed; inset:0; z-index:500; display:none; }
+    #tpPopup {
+      position:fixed; z-index:501; display:none; flex-direction:column;
+      background:var(--card); border:1px solid rgba(255,255,255,.12);
+      border-radius:14px; padding:0 10px 12px;
+      box-shadow:0 24px 64px rgba(0,0,0,.92), 0 0 0 1px rgba(255,255,255,.04);
+      min-width:210px;
+    }
+    .tp-header {
+      display:flex; justify-content:space-between; align-items:center;
+      padding:10px 2px 8px; border-bottom:1px solid var(--b);
+    }
+    .tp-title { font-size:9px; font-weight:700; color:var(--t3); text-transform:uppercase; letter-spacing:1.5px; }
+    .tp-done {
+      background:none; border:none; color:var(--accent);
+      font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; padding:2px 4px;
+    }
+    .tp-done:hover { color:var(--abright); }
+    .tp-wheels {
+      display:flex; align-items:center; gap:0; padding-top:8px; position:relative;
+    }
+    .tp-wheels::before {
+      content:''; position:absolute; left:0; right:0;
+      top:calc(8px + 36px); height:36px;
+      background:rgba(255,255,255,.07); border-radius:7px; pointer-events:none;
+    }
+    .tp-wheel-wrap {
+      flex:1; height:108px; overflow:hidden; position:relative;
+      -webkit-mask-image:linear-gradient(to bottom,transparent 0%,black 28%,black 72%,transparent 100%);
+      mask-image:linear-gradient(to bottom,transparent 0%,black 28%,black 72%,transparent 100%);
+    }
+    .tp-ampm-wrap { flex:0 0 54px; }
+    .tp-scroller {
+      height:100%; overflow-y:scroll; scroll-snap-type:y mandatory; scrollbar-width:none;
+    }
+    .tp-scroller::-webkit-scrollbar { display:none; }
+    .tp-ghost { height:36px; flex-shrink:0; scroll-snap-align:none; }
+    .tp-item {
+      height:36px; display:flex; align-items:center; justify-content:center;
+      scroll-snap-align:center; font-size:16px; font-weight:500;
+      color:var(--t2); cursor:pointer; user-select:none;
+    }
+    .tp-sep { font-size:20px; font-weight:700; color:var(--t1); flex-shrink:0; padding:0 2px; margin-top:8px; align-self:center; }
+    /* clock icon trigger button */
+    .mi-time-btn {
+      background:none; border:none; cursor:pointer; font-size:11px;
+      padding:0 1px; opacity:.55; transition:opacity .15s; line-height:1;
+    }
+    .mi-time-btn:hover { opacity:1; }
+
+    /* ── CONVERSATION SLOTS ── */
+    .conv-slots { display:flex; flex-direction:column; gap:5px; }
+    .conv-slot {
+      display:flex; align-items:center; gap:6px;
+      background:var(--card); border:1px solid var(--b);
+      border-radius:7px; padding:7px 9px;
+    }
+    .conv-slot-num {
+      width:20px; height:20px; border-radius:50%;
+      background:var(--card2); color:var(--t3);
+      font-size:10px; font-weight:700;
+      display:flex; align-items:center; justify-content:center; flex-shrink:0;
+    }
+    .conv-slot.filled .conv-slot-num { background:var(--accent); color:#1a1a1a; }
+    .conv-slot-info { flex:1; min-width:0; overflow:hidden; }
+    .conv-slot-name { font-size:11px; font-weight:500; color:var(--t2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .conv-slot.filled .conv-slot-name { color:var(--t1); }
+    .conv-slot-meta { font-size:9px; color:var(--t3); margin-top:1px; }
+    .conv-slot-btns { display:flex; gap:4px; flex-shrink:0; }
+    .conv-btn {
+      background:var(--card2); border:1px solid var(--b);
+      color:var(--t2); font-size:9px; font-weight:600;
+      padding:3px 7px; border-radius:4px; cursor:pointer;
+      font-family:inherit; transition:all .15s;
+    }
+    .conv-btn:hover { color:var(--t1); border-color:var(--t2); }
+    .conv-btn.save  { }
+    .conv-btn.load  { color:var(--accent); border-color:rgba(205,205,205,0.2); }
+    .conv-btn.load:hover { background:var(--accent); color:#1a1a1a; border-color:var(--accent); }
+    .conv-btn.del   { }
+    .conv-btn.del:hover { color:#ef4444; border-color:rgba(239,68,68,0.4); }
+
+    /* ── MOBILE SIDEBAR TOGGLE ── */
+    .mob-menu-btn {
+      display:none;
+      background:var(--card); border:1px solid var(--b);
+      color:var(--t1); padding:8px 11px; border-radius:8px;
+      cursor:pointer; font-size:16px; line-height:1;
+      align-items:center; justify-content:center; flex-shrink:0;
+    }
+
+    .sb-overlay {
+      display:none; position:fixed; inset:0;
+      background:rgba(0,0,0,.65); z-index:199;
+    }
+    .sb-overlay.open { display:block; }
+
+    @media (max-width:700px) {
+      :root { --sw:88vw; }
+
+      .mob-menu-btn { display:flex; }
+
+      /* Sidebar becomes a fixed drawer */
+      .sb {
+        position:fixed; top:var(--hh); left:0; bottom:var(--fh);
+        z-index:200; transform:translateX(-110%);
+        transition:transform .28s cubic-bezier(.4,0,.2,1);
+        max-width:var(--sw); width:var(--sw);
+      }
+      .sb.open { transform:translateX(0); box-shadow:8px 0 40px rgba(0,0,0,.8); }
+
+      /* Header compact */
+      .hdr { padding:0 10px; gap:8px; }
+      .brand h1 { font-size:13px; letter-spacing:0; }
+      .brand p  { display:none; }
+      .mode-toggle { margin-left:auto; }
+      .mode-btn { padding:7px 10px; font-size:11px; }
+      .btn-gen  { padding:8px 10px; font-size:11px; }
+      .btn-dl   { display:none; }
+
+      /* Footer compact */
+      .foot { flex-wrap:wrap; height:auto; padding:8px 12px; gap:8px; min-height:var(--fh); }
+      .foot-note { display:none; }
+      .foot-lbl { width:100%; margin-bottom:0; }
+      .rnd-btn { padding:8px 14px; font-size:12px; }
+
+      /* Message input row — let it wrap so nothing squishes */
+      .mi { flex-wrap:wrap; row-gap:4px; }
+      .mi-inp { min-width:100px; flex:1 1 100px; font-size:12px; }
+      .mi-time-wrap,
+      .mi-delay-wrap { white-space:nowrap; }
+
+      /* Close-up view padding */
+      #closeupView { padding:24px 20px; }
+
+      /* Bubble font sizes stay legible */
+      .cu-bub { font-size:15px; }
+      .p-bub  { font-size:14px; }
+
+      /* Speaker name inputs */
+      .spk-name-inp { font-size:12px; }
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- HEADER -->
+  <header class="hdr">
+    <div class="brand">
+      <h1>TEXT MESSAGE SIMULATOR</h1>
+      <p>Simple. Focused. Realistic.</p>
+    </div>
+    <button class="mob-menu-btn" onclick="toggleSidebar()" id="mobMenuBtn" aria-label="Settings">☰</button>
+    <div class="mode-toggle">
+      <button class="mode-btn on" id="mbPhone" onclick="setMode('phone')">📱 Full Phone</button>
+      <button class="mode-btn"    id="mbClose" onclick="setMode('closeup')">🔎 Close-Up</button>
+    </div>
+    <div class="hdr-actions">
+      <button class="btn-gen" id="btnGen" onclick="runPreview()">▶ Generate Preview</button>
+      <button class="btn-dl"  onclick="toast('Download requires render — coming soon')">⬇ Download</button>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- SIDEBAR -->
+    <aside class="sb">
+
+      <!-- 1. FORMAT -->
+      <div class="sec">
+        <div class="sec-title">1. Format</div>
+        <div class="fmt-card on" id="fc1" onclick="setMode('phone')">
+          <div class="fmt-ico">📱</div>
+          <div class="fmt-txt"><h3>Full Phone View</h3><p>Show entire phone UI</p></div>
+        </div>
+        <div class="fmt-card" id="fc2" onclick="setMode('closeup')">
+          <div class="fmt-ico">🔎</div>
+          <div class="fmt-txt"><h3>Close-Up Conversation</h3><p>Show conversation only</p></div>
+        </div>
+      </div>
+
+      <!-- BACKGROUND -->
+      <div class="sec">
+        <div class="sec-title">Background</div>
+        <div class="bg-swatches">
+          <div class="bg-sw bg-sw-dark on"  title="Cinematic Dark" onclick="setBg('dark',this)"></div>
+          <div class="bg-sw bg-sw-black"    title="Pure Black"     onclick="setBg('black',this)"></div>
+          <div class="bg-sw bg-sw-white"    title="Pure White"     onclick="setBg('white',this)"></div>
+          <div class="bg-sw bg-sw-green"    title="#00b140 Green"  onclick="setBg('green',this)"></div>
+          <span class="bg-sw-label" id="bgLabel">Cinematic Dark</span>
+        </div>
+      </div>
+
+      <!-- 2. SPEAKERS -->
+      <div class="sec">
+        <div class="sec-title">2. Speakers</div>
+        <div id="spkList"></div>
+      </div>
+
+      <!-- 3. CONVERSATION -->
+      <div class="sec">
+        <div class="sec-title">3. Conversation Editor</div>
+        <div class="msg-list" id="msgList"></div>
+        <button class="add-btn" onclick="addMsg()">+ Add Message</button>
+      </div>
+
+      <!-- 4. OPTIONS -->
+      <div class="sec">
+        <div class="sec-title">4. Message Options</div>
+        <div class="tog-row">
+          <div class="tog-label"><h4>Typing Indicator</h4></div>
+          <div class="tog on" id="tog-typing" onclick="togOpt('typing',this)"><div class="tog-k"></div></div>
+        </div>
+        <div class="tog-row">
+          <div class="tog-label"><h4>Show Timestamps</h4></div>
+          <div class="tog on" id="tog-ts" onclick="togOpt('ts',this)"><div class="tog-k"></div></div>
+        </div>
+        <div class="tog-row">
+          <div class="tog-label"><h4>Show Delivered Status</h4></div>
+          <div class="tog on" id="tog-del" onclick="togOpt('del',this)"><div class="tog-k"></div></div>
+        </div>
+        <div class="tog-row">
+          <div class="tog-label"><h4>Avatars in Close-Up</h4></div>
+          <div class="tog on" id="tog-av" onclick="togOpt('av',this)"><div class="tog-k"></div></div>
+        </div>
+        <div class="tog-row">
+          <div class="tog-label"><h4>Light Phone UI</h4><p>iPhone light mode</p></div>
+          <div class="tog" id="tog-uiLight" onclick="togPhoneUI(this)"><div class="tog-k"></div></div>
+        </div>
+      </div>
+
+      <!-- 5. SAVED CONVERSATIONS -->
+      <div class="sec">
+        <div class="sec-title">5. Saved Conversations</div>
+        <div class="conv-slots" id="convSlots"></div>
+      </div>
+
+    </aside>
+
+    <!-- PREVIEW -->
+    <div class="pv-center">
+
+      <!-- PHONE VIEW -->
+      <div id="phoneView" class="bg-dark">
+        <div class="p-shell">
+          <div class="p-body">
+            <div class="p-di" id="pdi"></div>
+            <div class="p-screen">
+              <div class="p-status">
+                <span class="t" id="pStatusTime">9:41</span>
+                <div class="ic"><span>▐▐▐</span><span>WiFi</span><span>🔋</span></div>
+              </div>
+              <div class="p-hdr" id="pHdr"></div>
+              <div class="p-msgs" id="pMsgs">
+                <div class="p-date">iMessage · Today 9:41 AM</div>
+              </div>
+              <div class="p-input">
+                <div class="p-add">+</div>
+                <div class="p-field">iMessage</div>
+                <span class="p-mic">
+                  <svg width="15" height="21" viewBox="0 0 15 21" fill="none">
+                    <rect x="4.5" y="0.8" width="6" height="11" rx="3" fill="#3b82f6"/>
+                    <path d="M1.5 10C1.5 13.6 4.2 16.5 7.5 16.5S13.5 13.6 13.5 10" stroke="#3b82f6" stroke-width="1.7" stroke-linecap="round"/>
+                    <line x1="7.5" y1="16.5" x2="7.5" y2="20" stroke="#3b82f6" stroke-width="1.7" stroke-linecap="round"/>
+                    <line x1="5" y1="20" x2="10" y2="20" stroke="#3b82f6" stroke-width="1.7" stroke-linecap="round"/>
+                  </svg>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CLOSE-UP VIEW -->
+      <div id="closeupView" class="bg-dark" style="display:none"></div>
+
+    </div>
+  </div><!-- /main -->
+
+  <!-- FOOTER -->
+  <footer class="foot">
+    <div class="foot-lbl">Export Preview</div>
+    <div class="foot-grp"><span>Format</span>
+      <select class="foot-sel"><option>MP4</option><option>MOV</option><option>GIF</option></select>
+    </div>
+    <div class="foot-grp"><span>Resolution</span>
+      <select class="foot-sel"><option>1080p</option><option selected>4K</option><option>2K</option></select>
+    </div>
+    <div class="foot-grp"><span>Duration</span>
+      <select class="foot-sel"><option>3 sec</option><option>5 sec</option><option selected>6 sec</option><option>8 sec</option><option>10 sec</option></select>
+    </div>
+    <div class="foot-note">Preview Mode Only<br>No video will be generated</div>
+    <button class="rnd-btn" onclick="runPreview()">▶ Render Preview</button>
+  </footer>
+
+</div>
+<div class="sb-overlay" id="sbOverlay" onclick="closeSidebar()"></div>
+<div class="toast" id="toastEl"></div>
+
+<!-- TIME PICKER -->
+<div id="tpOverlay" onclick="closeTimePicker()"></div>
+<div id="tpPopup">
+  <div class="tp-header">
+    <span class="tp-title">Set Time</span>
+    <button class="tp-done" onclick="closeTimePicker()">Done</button>
+  </div>
+  <div class="tp-wheels">
+    <div class="tp-wheel-wrap">
+      <div class="tp-scroller" id="tpHour" onscroll="onTpScroll('Hour')"></div>
+    </div>
+    <div class="tp-sep">:</div>
+    <div class="tp-wheel-wrap">
+      <div class="tp-scroller" id="tpMin" onscroll="onTpScroll('Min')"></div>
+    </div>
+    <div class="tp-wheel-wrap tp-ampm-wrap">
+      <div class="tp-scroller" id="tpAmpm" onscroll="onTpScroll('Ampm')"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══ CONSTANTS ══ */
+const LEFT_PALETTES = [
+  'linear-gradient(135deg,#555,#333)',
+  'linear-gradient(135deg,#b91c1c,#7f1d1d)',
+  'linear-gradient(135deg,#d97706,#92400e)',
+  'linear-gradient(135deg,#15803d,#14532d)',
+  'linear-gradient(135deg,#7c3aed,#4c1d95)',
+];
+const HDR_ICONS = `<div class="p-hdr-ic">
+  <svg width="22" height="16" viewBox="0 0 22 16" fill="none">
+    <rect x="1" y="1" width="12" height="14" rx="2.5" stroke="#3b82f6" stroke-width="1.7"/>
+    <path d="M13 5L21 2V14L13 11V5Z" stroke="#3b82f6" stroke-width="1.7" stroke-linejoin="round"/>
+  </svg>
+  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+    <path d="M4.2 1.8C3.9 1.1 3.1.8 2.4 1.1L1.3 1.8C.6 2.2.3 3 .6 3.8 1.7 7 4.3 9.7 7.5 11c.8.3 1.7 0 2.1-.7l.7-1.2c.4-.7.2-1.6-.5-2L8.4 6.4c-.6-.4-1.3-.2-1.7.4l-.2.3C5.8 6.8 4.9 5.9 4.5 5.1l.3-.2c.6-.4.8-1.1.4-1.7L4.2 1.8Z" fill="#3b82f6"/>
+  </svg>
+</div>`;
+
+/* ══ STATE ══ */
+const S = {
+  mode: 'phone',
+  bg: 'dark',
+  spk: [
+    { id:1, name:'Helen',  side:'left',  avatar:null, grad:LEFT_PALETTES[0] },
+    { id:2, name:'Carlos', side:'right', avatar:null, grad:'linear-gradient(135deg,#2563eb,#1e40af)' },
+  ],
+  msgs: [
+    { id:1, sid:1, text:'You coming or not?', time:'9:41 AM', delay:1.5 },
+    { id:2, sid:2, text:"I'm outside",        time:'9:41 AM', delay:1.5 },
+    { id:3, sid:1, text:"I don't see you",    time:'9:42 AM', delay:1.5 },
+    { id:4, sid:2, text:'Turn around',        time:'9:42 AM', delay:1.5 },
+  ],
+  opts: { typing:true, ts:true, del:true, av:true },
+  nid: 5,
+  nspk: 3,
+  running: false,
+};
+
+const spk = (id) => S.spk.find(s => s.id === id);
+const esc = (s) => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+/* ══ INIT ══ */
+document.addEventListener('DOMContentLoaded', () => {
+  _firstMsgBaseTime = parseTime(S.msgs[0]?.time || '9:41 AM');
+  renderSpkList();
+  renderList();
+  renderPhone(S.msgs);
+  renderCU(S.msgs);
+  renderConvSlots();
+  initSidebarResize();
+});
+
+/* ══ MODE ══ */
+function setMode(m) {
+  S.mode = m;
+  document.getElementById('mbPhone').classList.toggle('on', m==='phone');
+  document.getElementById('mbClose').classList.toggle('on', m==='closeup');
+  document.getElementById('fc1').classList.toggle('on', m==='phone');
+  document.getElementById('fc2').classList.toggle('on', m==='closeup');
+  document.getElementById('phoneView').style.display   = m==='phone'   ? 'flex' : 'none';
+  document.getElementById('closeupView').style.display = m==='closeup' ? 'flex' : 'none';
+  if (m==='closeup') renderCU(S.msgs);
+}
+
+/* ══ BACKGROUND ══ */
+const BG_LABELS = { dark:'Cinematic Dark', black:'Pure Black', white:'Pure White', green:'#00b140 Green' };
+
+function setBg(val, el) {
+  S.bg = val;
+  document.querySelectorAll('.bg-sw').forEach(s => s.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('bgLabel').textContent = BG_LABELS[val];
+  const pv = document.getElementById('phoneView');
+  pv.className = `bg-${val}`;
+  pv.style.display = S.mode === 'phone' ? 'flex' : 'none';
+  const cv = document.getElementById('closeupView');
+  const cvDisplay = cv.style.display;
+  cv.className = `bg-${val}`;
+  cv.style.display = cvDisplay;
+}
+
+/* ══ SPEAKERS ══ */
+function renderSpkList() {
+  const leftSpks = S.spk.filter(s => s.side === 'left');
+  const canAdd = S.spk.length < 6;
+  const canRemove = leftSpks.length > 1;
+
+  const html = S.spk.map(s => {
+    const isRight = s.side === 'right';
+    const grad = isRight ? 'linear-gradient(135deg,#2563eb,#1e40af)' : s.grad;
+    const sideLabel = isRight ? 'Right · Blue bubble · Me' : 'Left · Grey bubble';
+    const avContent = s.avatar
+      ? `<img src="${esc(s.avatar)}" alt="${esc(s.name)}">`
+      : `<span id="ai${s.id}">${s.name.charAt(0).toUpperCase()||'?'}</span>`;
+    return `<div class="spk-card">
+      <div class="spk-row">
+        <div class="av-wrap" onclick="document.getElementById('af${s.id}').click()">
+          <div class="av-circle" id="ac${s.id}" style="background:${grad}">${avContent}</div>
+          <div class="av-hint">📷</div>
+          <input type="file" id="af${s.id}" class="av-file" accept="image/png,image/jpeg" onchange="uploadAv(${s.id},this)">
+        </div>
+        <div class="spk-info">
+          <input class="spk-name-inp" id="sn${s.id}" type="text" value="${esc(s.name)}" oninput="updName(${s.id},this.value)">
+          <div class="spk-sub">${sideLabel}</div>
+        </div>
+        ${!isRight && canRemove ? `<button class="spk-del" onclick="removeSpeaker(${s.id})">✕</button>` : ''}
+      </div>
+      <button class="upload-btn" onclick="document.getElementById('af${s.id}').click()">⬆ Upload Image</button>
+    </div>`;
+  }).join('');
+
+  document.getElementById('spkList').innerHTML = html
+    + (canAdd ? `<button class="add-btn" style="margin-top:6px" onclick="addSpeaker()">+ Add Speaker</button>` : '');
+  renderPhoneHeader();
+}
+
+function addSpeaker() {
+  if (S.spk.length >= 6) return;
+  const leftCount = S.spk.filter(s => s.side === 'left').length;
+  S.spk.push({
+    id: S.nspk++, name: 'Speaker ' + (S.spk.length + 1), side: 'left', avatar: null,
+    grad: LEFT_PALETTES[Math.min(leftCount, LEFT_PALETTES.length - 1)],
+  });
+  renderSpkList(); renderList(); renderPhone(S.msgs); renderCU(S.msgs);
+}
+
+function removeSpeaker(id) {
+  if (S.spk.filter(s => s.side === 'left').length <= 1) return;
+  S.spk = S.spk.filter(s => s.id !== id);
+  const fallback = S.spk.find(s => s.side === 'left') || S.spk[0];
+  S.msgs = S.msgs.map(m => m.sid === id ? {...m, sid: fallback.id} : m);
+  renderSpkList(); renderList(); renderPhone(S.msgs); renderCU(S.msgs);
+}
+
+function updName(id, val) {
+  const s = spk(id); if (!s) return;
+  s.name = val;
+  const ai = document.getElementById('ai'+id);
+  if (ai) ai.textContent = val.charAt(0).toUpperCase() || '?';
+  renderPhoneHeader();
+  renderList(); renderPhone(S.msgs); renderCU(S.msgs);
+}
+
+function uploadAv(id, inp) {
+  const file = inp.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const s = spk(id); if (!s) return;
+    s.avatar = e.target.result;
+    const ac = document.getElementById('ac'+id);
+    if (ac) ac.innerHTML = `<img src="${esc(s.avatar)}" alt="${esc(s.name)}">`;
+    renderPhoneHeader(); renderPhone(S.msgs); renderCU(S.msgs);
+    toast(s.name + "'s photo updated ✓");
+  };
+  reader.readAsDataURL(file);
+}
+
+/* ══ PHONE HEADER ══ */
+function renderPhoneHeader() {
+  const el = document.getElementById('pHdr');
+  if (!el) return;
+  const leftSpks = S.spk.filter(s => s.side === 'left');
+  const isGroup = S.spk.length > 2;
+
+  let avSection;
+  if (isGroup) {
+    const shown = leftSpks.slice(0, 2);
+    avSection = `<div class="p-grp-avs">${shown.map(s => avHtml(s,'p-hdr-av-sm')).join('')}</div>`;
+  } else {
+    const s = leftSpks[0] || S.spk[0];
+    const avContent = s.avatar ? `<img src="${esc(s.avatar)}" alt="${esc(s.name)}">` : s.name.charAt(0).toUpperCase();
+    avSection = `<div class="p-hdr-av" style="background:${s.grad}">${avContent}</div>`;
+  }
+
+  const contactLine = isGroup
+    ? `<div class="cn">${S.spk.length} People ›</div><div class="cs">iMessage Group</div>`
+    : `<div class="cn">${esc(leftSpks[0]?.name||'')}</div><div class="cs">iMessage</div>`;
+
+  el.innerHTML = `<span class="p-back">‹</span>${avSection}<div class="p-contact">${contactLine}</div>${HDR_ICONS}`;
+}
+
+/* ══ AVATAR HELPERS ══ */
+function avHtml(s, cls) {
+  if (s.avatar) return `<div class="${cls}"><img src="${esc(s.avatar)}" alt="${esc(s.name)}"></div>`;
+  return `<div class="${cls}" style="background:${s.grad}">${s.name.charAt(0).toUpperCase()}</div>`;
+}
+
+/* ══ MESSAGE LIST ══ */
+function renderList() {
+  document.getElementById('msgList').innerHTML = S.msgs.map(m => {
+    const s = spk(m.sid);
+    const isR = s?.side === 'right';
+    return `<div class="mi" id="mi${m.id}">
+      <div class="mi-dot ${isR?'d-right':'d-left'}"></div>
+      <select class="mi-sel ${isR?'r':''}" onchange="updSid(${m.id},this)">
+        ${S.spk.map(sp=>`<option value="${sp.id}" ${sp.id===m.sid?'selected':''}>${sp.name}</option>`).join('')}
+      </select>
+      <input class="mi-inp" type="text" value="${esc(m.text)}" oninput="updTxt(${m.id},this.value)" placeholder="Message…">
+      <span class="mi-time-wrap" title="Message timestamp"><button class="mi-time-btn" onclick="openTimePicker(${m.id},this)" title="Pick time">🕐</button><input class="mi-time" type="text" value="${esc(m.time||'9:41 AM')}" oninput="updTime(${m.id},this.value)" placeholder="9:41 AM"></span>
+      <span class="mi-delay-wrap" title="Typing delay in seconds">⏱<input class="mi-delay" type="number" min="0.3" max="10" step="0.5" value="${m.delay||1.5}" oninput="updDelay(${m.id},this.value)">s</span>
+      <button class="mi-del" onclick="delMsg(${m.id})">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function parseTime(str) {
+  const m = String(str).trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (!m) return null;
+  let h = parseInt(m[1]);
+  const min = parseInt(m[2]);
+  const ampm = m[3].toUpperCase();
+  if (ampm === 'AM') { if (h === 12) h = 0; }
+  else               { if (h !== 12) h += 12; }
+  return h * 60 + min;
+}
+
+function formatTime(totalMins) {
+  totalMins = ((totalMins % 1440) + 1440) % 1440;
+  const h24 = Math.floor(totalMins / 60);
+  const min  = totalMins % 60;
+  const ampm = h24 < 12 ? 'AM' : 'PM';
+  let h = h24 % 12; if (h === 0) h = 12;
+  return `${h}:${String(min).padStart(2,'0')} ${ampm}`;
+}
+
+let _firstMsgBaseTime = null; // last valid time (mins) of msg[0]; set on init + load
+
+function updTime(id, val) {
+  const idx = S.msgs.findIndex(m => m.id === id);
+  const m = S.msgs[idx];
+  if (!m) return;
+
+  m.time = val;
+
+  if (idx === 0) {
+    const newMins = parseTime(val);
+    if (newMins !== null && _firstMsgBaseTime !== null) {
+      const delta = newMins - _firstMsgBaseTime;
+      for (let i = 1; i < S.msgs.length; i++) {
+        const t = parseTime(S.msgs[i].time);
+        if (t !== null) {
+          S.msgs[i].time = formatTime(t + delta);
+          const inp = document.querySelector(`#mi${S.msgs[i].id} .mi-time`);
+          if (inp) inp.value = S.msgs[i].time;
+        }
+      }
+    }
+    if (newMins !== null) _firstMsgBaseTime = newMins;
+  }
+
+  renderPhone(S.msgs); renderCU(S.msgs);
+}
+
+function updDelay(id, val) {
+  const m = S.msgs.find(m => m.id === id);
+  if (m) m.delay = Math.max(0.3, parseFloat(val) || 1.5);
+}
+
+function updSid(id, sel) {
+  const m = S.msgs.find(m=>m.id===id); if (!m) return;
+  m.sid = parseInt(sel.value);
+  const s = spk(m.sid);
+  const isR = s?.side==='right';
+  sel.className = `mi-sel ${isR?'r':''}`;
+  sel.previousElementSibling.className = `mi-dot ${isR?'d-right':'d-left'}`;
+  renderPhone(S.msgs); renderCU(S.msgs);
+}
+
+function updTxt(id, val) {
+  const m = S.msgs.find(m=>m.id===id);
+  if (m) { m.text=val; renderPhone(S.msgs); renderCU(S.msgs); }
+}
+
+function delMsg(id) {
+  S.msgs = S.msgs.filter(m=>m.id!==id);
+  renderList(); renderPhone(S.msgs); renderCU(S.msgs);
+}
+
+function addMsg() {
+  const last = S.msgs[S.msgs.length-1];
+  const nextSpk = last ? (S.spk.find(s=>s.id!==last.sid)||S.spk[0]) : S.spk[0];
+  S.msgs.push({ id:S.nid++, sid:nextSpk.id, text:'', time:last?.time||'9:41 AM', delay:1.5 });
+  renderList(); renderPhone(S.msgs); renderCU(S.msgs);
+  setTimeout(() => {
+    const ins = document.querySelectorAll('.mi-inp');
+    ins[ins.length-1]?.focus();
+  }, 40);
+}
+
+/* ══ TOGGLES ══ */
+function togOpt(k, el) {
+  S.opts[k] = !S.opts[k];
+  el.classList.toggle('on', S.opts[k]);
+  renderPhone(S.msgs); renderCU(S.msgs);
+}
+
+/* ══ PHONE RENDER ══ */
+function renderPhone(msgs, animate) {
+  const area = document.getElementById('pMsgs');
+  const isGroup = S.spk.length > 2;
+  let html = '<div class="p-date">iMessage · Today 9:41 AM</div>';
+
+  msgs.forEach((m, i) => {
+    const s = spk(m.sid); if (!s) return;
+    const side = s.side==='right' ? 'r' : 'l';
+    const isLast = i === msgs.length-1;
+    const doAnim = animate && isLast ? 'pop' : '';
+    const showDel = S.opts.del && s.side==='right' && isLast;
+    const showName = isGroup && s.side === 'left';
+
+    html += `<div class="p-row ${side}">
+      ${avHtml(s,'p-av-sm')}
+      <div class="p-bwrap">
+        ${showName ? `<div class="p-sname">${esc(s.name)}</div>` : ''}
+        <div class="p-bub ${side} ${doAnim}">${esc(m.text)}</div>
+        ${S.opts.ts ? `<div class="p-meta">${m.time}${showDel ? ' · Delivered ✓':''}</div>` : ''}
+      </div>
+    </div>`;
+  });
+
+  if (S.opts.typing && msgs.length && !S.running) {
+    const lastS = spk(msgs[msgs.length-1].sid);
+    const other = S.spk.find(s=>s.id!==lastS?.id) || S.spk[0];
+    html += `<div class="typ-row">
+      ${avHtml(other,'p-av-sm')}
+      <div class="typ-bub"><div class="d"></div><div class="d"></div><div class="d"></div></div>
+    </div>`;
+  }
+
+  area.innerHTML = html;
+  area.scrollTop = area.scrollHeight;
+
+  const statusTime = document.getElementById('pStatusTime');
+  if (statusTime && msgs.length) {
+    statusTime.textContent = msgs[msgs.length - 1].time.replace(/\s*(AM|PM)$/i, '').trim();
+  }
+}
+
+/* ══ CLOSE-UP RENDER ══ */
+function renderCU(msgs, animate) {
+  const view = document.getElementById('closeupView');
+  let html = '';
+
+  msgs.forEach((m, i) => {
+    const s = spk(m.sid); if (!s) return;
+    const side = s.side==='right' ? 'r' : 'l';
+    const isLast = i === msgs.length-1;
+    const doAnim = animate && isLast ? 'pop' : '';
+    const showDel = S.opts.del && s.side==='right' && isLast;
+
+    html += `<div class="cu-grp ${side}">
+      ${S.opts.av ? avHtml(s,'cu-av') : ''}
+      <div class="cu-col">
+        <div class="cu-who">${esc(s.name)}</div>
+        <div class="cu-bub ${side} ${doAnim}">${esc(m.text)}</div>
+        ${S.opts.ts ? `<div class="cu-meta">
+          <span>${m.time}</span>
+          ${showDel ? '<span style="color:#4A4A4A">Delivered ✓✓</span>' : ''}
+        </div>` : ''}
+      </div>
+    </div>`;
+  });
+
+  if (S.opts.typing && msgs.length && !S.running) {
+    const lastS = spk(msgs[msgs.length-1].sid);
+    const other = S.spk.find(s=>s.id!==lastS?.id) || S.spk[0];
+    html += `<div class="cu-typ-grp">
+      ${S.opts.av ? avHtml(other,'cu-av') : ''}
+      <div class="cu-typ-bub"><div class="d"></div><div class="d"></div><div class="d"></div></div>
+    </div>`;
+  }
+
+  view.innerHTML = html;
+}
+
+/* ══ ANIMATED PREVIEW ══ */
+let _timers = [];
+
+function runPreview() {
+  if (S.running) { stopPreview(); return; }
+  if (!S.msgs.length) { toast('Add some messages first!'); return; }
+
+  S.running = true;
+  document.getElementById('btnGen').textContent = '⏹ Stop Preview';
+  toast('▶ Playing preview…');
+
+  const di = document.getElementById('pdi');
+  di.classList.add('big');
+  _timers.push(setTimeout(()=>di.classList.remove('big'), 900));
+
+  document.getElementById('pMsgs').innerHTML = '<div class="p-date">iMessage · Today 9:41 AM</div>';
+  document.getElementById('closeupView').innerHTML = '';
+
+  const revealed = [];
+  let cursor = 300;
+
+  S.msgs.forEach((m) => {
+    const s = spk(m.sid);
+    const typDur = Math.round((m.delay || 1.5) * 1000);
+    const base = cursor;
+
+    _timers.push(setTimeout(() => showTyp(s), base));
+    _timers.push(setTimeout(() => {
+      hideTyp();
+      revealed.push(m);
+      renderPhone([...revealed], true);
+      renderCU([...revealed], true);
+    }, base + typDur));
+
+    cursor += typDur + 600;
+  });
+
+  _timers.push(setTimeout(() => {
+    S.running = false;
+    document.getElementById('btnGen').textContent = '▶ Generate Preview';
+    hideTyp();
+    renderPhone(S.msgs);
+    renderCU(S.msgs);
+    toast('✅ Preview complete');
+  }, cursor + 400));
+}
+
+function stopPreview() {
+  _timers.forEach(clearTimeout); _timers = [];
+  S.running = false;
+  document.getElementById('btnGen').textContent = '▶ Generate Preview';
+  hideTyp();
+  renderPhone(S.msgs); renderCU(S.msgs);
+  toast('⏹ Stopped');
+}
+
+function showTyp(s) {
+  const area = document.getElementById('pMsgs');
+  if (!document.getElementById('ptyp')) {
+    const el = document.createElement('div');
+    el.id = 'ptyp'; el.className = 'typ-row';
+    el.innerHTML = `${avHtml(s,'p-av-sm')}<div class="typ-bub pop"><div class="d"></div><div class="d"></div><div class="d"></div></div>`;
+    area.appendChild(el); area.scrollTop = area.scrollHeight;
+  }
+  const cuv = document.getElementById('closeupView');
+  if (!document.getElementById('ctyp')) {
+    const el = document.createElement('div');
+    el.id = 'ctyp'; el.className = 'cu-typ-grp';
+    el.innerHTML = `${S.opts.av ? avHtml(s,'cu-av') : ''}<div class="cu-typ-bub pop"><div class="d"></div><div class="d"></div><div class="d"></div></div>`;
+    cuv.appendChild(el);
+  }
+}
+
+function hideTyp() {
+  document.getElementById('ptyp')?.remove();
+  document.getElementById('ctyp')?.remove();
+}
+
+function togPhoneUI(el) {
+  const body = document.querySelector('.p-body');
+  const isLight = body.classList.toggle('ui-light');
+  el.classList.toggle('on', isLight);
+}
+
+/* ══ MOBILE SIDEBAR ══ */
+function toggleSidebar() {
+  const sb = document.querySelector('.sb');
+  const ov = document.getElementById('sbOverlay');
+  const isOpen = sb.classList.toggle('open');
+  ov.classList.toggle('open', isOpen);
+}
+function closeSidebar() {
+  document.querySelector('.sb').classList.remove('open');
+  document.getElementById('sbOverlay').classList.remove('open');
+}
+
+/* ══ CONVERSATION SLOTS ══ */
+const CONV_KEY = 'tms_convs_v1';
+const MAX_SLOTS = 6;
+
+function loadSlots() {
+  try { return JSON.parse(localStorage.getItem(CONV_KEY)) || []; } catch { return []; }
+}
+function saveSlots(slots) {
+  localStorage.setItem(CONV_KEY, JSON.stringify(slots));
+}
+
+function renderConvSlots() {
+  const slots = loadSlots();
+  const container = document.getElementById('convSlots');
+  let html = '';
+  for (let i = 0; i < MAX_SLOTS; i++) {
+    const slot = slots[i];
+    const filled = !!slot;
+    const speakerNames = filled ? slot.spk.map(s=>s.name).join(', ') : '';
+    const msgCount = filled ? slot.msgs.length : 0;
+    html += `<div class="conv-slot${filled?' filled':''}">
+      <div class="conv-slot-num">${i+1}</div>
+      <div class="conv-slot-info">
+        <div class="conv-slot-name">${filled ? esc(speakerNames) : 'Empty slot'}</div>
+        ${filled ? `<div class="conv-slot-meta">${msgCount} message${msgCount!==1?'s':''}</div>` : ''}
+      </div>
+      <div class="conv-slot-btns">
+        <button class="conv-btn save" onclick="saveConv(${i})">Save</button>
+        ${filled ? `<button class="conv-btn load" onclick="loadConv(${i})">Load</button>` : ''}
+        ${filled ? `<button class="conv-btn del"  onclick="deleteConv(${i})">✕</button>` : ''}
+      </div>
+    </div>`;
+  }
+  container.innerHTML = html;
+}
+
+function saveConv(i) {
+  const slots = loadSlots();
+  slots[i] = {
+    spk: S.spk.map(s => ({ id:s.id, name:s.name, side:s.side, grad:s.grad, avatar:s.avatar })),
+    msgs: JSON.parse(JSON.stringify(S.msgs)),
+  };
+  saveSlots(slots);
+  renderConvSlots();
+  toast(`Saved to slot ${i+1} ✓`);
+}
+
+function loadConv(i) {
+  const slots = loadSlots();
+  const slot = slots[i]; if (!slot) return;
+  S.spk = slot.spk;
+  S.msgs = slot.msgs;
+  S.nid = Math.max(...S.msgs.map(m=>m.id), 0) + 1;
+  S.nspk = Math.max(...S.spk.map(s=>s.id), 0) + 1;
+  _firstMsgBaseTime = parseTime(S.msgs[0]?.time || '9:41 AM');
+  renderSpkList(); renderList(); renderPhone(S.msgs); renderCU(S.msgs); renderConvSlots();
+  toast(`Loaded slot ${i+1} ✓`);
+}
+
+function deleteConv(i) {
+  const slots = loadSlots();
+  slots[i] = null;
+  saveSlots(slots);
+  renderConvSlots();
+  toast(`Slot ${i+1} cleared`);
+}
+
+/* ══ SIDEBAR RESIZE ══ */
+function initSidebarResize() {
+  const sb = document.querySelector('.sb');
+  const handle = document.createElement('div');
+  handle.className = 'sb-handle'; handle.id = 'sbHandle';
+  sb.appendChild(handle);
+  const saved = localStorage.getItem('tms_sbw');
+  if (saved) document.documentElement.style.setProperty('--sw', saved + 'px');
+  let dragging = false, startX = 0, startW = 0;
+  handle.addEventListener('mousedown', e => {
+    dragging = true; startX = e.clientX; startW = sb.offsetWidth;
+    handle.classList.add('dragging'); e.preventDefault();
+  });
+  document.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    const w = Math.max(220, Math.min(560, startW + (e.clientX - startX)));
+    document.documentElement.style.setProperty('--sw', w + 'px');
+  });
+  document.addEventListener('mouseup', () => {
+    if (!dragging) return;
+    dragging = false; handle.classList.remove('dragging');
+    localStorage.setItem('tms_sbw', sb.offsetWidth);
+  });
+}
+
+/* ══ TIME PICKER ══ */
+let _tpMsgId = null;
+const _tpScrollTimers = {};
+const TP_HOURS = ['1','2','3','4','5','6','7','8','9','10','11','12'];
+const TP_MINS  = Array.from({length:60}, (_,i) => String(i).padStart(2,'0'));
+const TP_AMPM  = ['AM','PM'];
+
+function _buildWheel(items) {
+  return `<div class="tp-ghost"></div>${items.map(v=>`<div class="tp-item">${v}</div>`).join('')}<div class="tp-ghost"></div>`;
+}
+
+function openTimePicker(msgId, triggerEl) {
+  _tpMsgId = msgId;
+  const m = S.msgs.find(x => x.id === msgId);
+  const ts = m?.time || '9:41 AM';
+
+  document.getElementById('tpHour').innerHTML = _buildWheel(TP_HOURS);
+  document.getElementById('tpMin').innerHTML  = _buildWheel(TP_MINS);
+  document.getElementById('tpAmpm').innerHTML = _buildWheel(TP_AMPM);
+
+  const match = ts.trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  const popup = document.getElementById('tpPopup');
+  popup.style.display = 'flex';
+  document.getElementById('tpOverlay').style.display = 'block';
+
+  // Position near trigger
+  const miRect = triggerEl.closest('.mi').getBoundingClientRect();
+  let top = miRect.bottom + 6;
+  let left = miRect.left;
+  if (top + 220 > window.innerHeight) top = miRect.top - 226;
+  if (left + 220 > window.innerWidth) left = window.innerWidth - 224;
+  popup.style.top = Math.max(4, top) + 'px';
+  popup.style.left = Math.max(4, left) + 'px';
+
+  if (match) {
+    const hIdx = parseInt(match[1]) - 1;
+    const mIdx = parseInt(match[2]);
+    const aIdx = match[3].toUpperCase() === 'PM' ? 1 : 0;
+    requestAnimationFrame(() => {
+      document.getElementById('tpHour').scrollTop = hIdx * 36;
+      document.getElementById('tpMin').scrollTop  = mIdx * 36;
+      document.getElementById('tpAmpm').scrollTop = aIdx * 36;
+    });
+  }
+}
+
+function closeTimePicker() {
+  document.getElementById('tpPopup').style.display = 'none';
+  document.getElementById('tpOverlay').style.display = 'none';
+  _tpMsgId = null;
+}
+
+function onTpScroll(col) {
+  clearTimeout(_tpScrollTimers[col]);
+  _tpScrollTimers[col] = setTimeout(() => _commitTp(), 180);
+}
+
+function _commitTp() {
+  if (_tpMsgId === null) return;
+  const hIdx = Math.min(11, Math.max(0, Math.round(document.getElementById('tpHour').scrollTop / 36)));
+  const mIdx = Math.min(59, Math.max(0, Math.round(document.getElementById('tpMin').scrollTop  / 36)));
+  const aIdx = Math.min(1,  Math.max(0, Math.round(document.getElementById('tpAmpm').scrollTop / 36)));
+  const timeStr = `${TP_HOURS[hIdx]}:${TP_MINS[mIdx]} ${TP_AMPM[aIdx]}`;
+  updTime(_tpMsgId, timeStr);
+  const inp = document.querySelector(`#mi${_tpMsgId} .mi-time`);
+  if (inp) inp.value = timeStr;
+}
+
+/* ══ TOAST ══ */
+let _tt = null;
+function toast(msg) {
+  const el = document.getElementById('toastEl');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(_tt); _tt = setTimeout(()=>el.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>
