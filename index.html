@@ -233,6 +233,14 @@
 	      font-family:inherit; font-size:12px; outline:none;
 	    }
 	    .text-field:focus { border-color:var(--t2); }
+	    .chip-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+	    .chip-btn {
+	      background:var(--card); border:1px solid var(--b); color:var(--t2);
+	      padding:7px 8px; border-radius:6px; font-size:10px; font-weight:600;
+	      cursor:pointer; font-family:inherit; transition:all .15s;
+	    }
+	    .chip-btn.on { background:var(--accent); border-color:var(--accent); color:#1a1a1a; }
+	    .chip-btn:hover:not(.on) { color:var(--t1); border-color:var(--t2); }
 
     /* Toggles */
     .tog-row {
@@ -497,13 +505,14 @@
     }
     .foot-sel:focus { border-color:var(--t2); }
     .foot-note { margin-left:auto; font-size:10px; color:var(--t3); text-align:right; line-height:1.5; }
-    .rnd-btn {
-      background:var(--accent); color:#1a1a1a; border:none;
-      padding:10px 22px; border-radius:8px; font-size:13px; font-weight:600;
-      cursor:pointer; font-family:inherit;
-      display:flex; align-items:center; gap:7px; transition:all .2s;
-    }
-    .rnd-btn:hover { background:var(--abright); box-shadow:0 4px 20px var(--aglow); }
+	    .rnd-btn {
+	      background:var(--accent); color:#1a1a1a; border:none;
+	      padding:10px 22px; border-radius:8px; font-size:13px; font-weight:600;
+	      cursor:pointer; font-family:inherit;
+	      display:flex; align-items:center; gap:7px; transition:all .2s;
+	    }
+	    .rnd-btn:hover { background:var(--abright); box-shadow:0 4px 20px var(--aglow); }
+	    .rnd-btn.busy { opacity:.7; pointer-events:none; }
 
     /* toast */
     .toast {
@@ -757,14 +766,14 @@ Helen: I don't see you"></textarea>
 	          <input class="text-field" id="dateLabelInput" type="text" value="iMessage · Today 9:41 AM" oninput="updDateLabel(this.value)" placeholder="Date separator">
 	        </div>
 	        <div class="field-row" style="margin-bottom:8px">
-	          <select class="foot-sel" id="receiptType" onchange="updReceipt(this.value)">
-	            <option value="delivered" selected>Delivered</option>
-	            <option value="read">Read</option>
-	            <option value="seen">Seen</option>
-	            <option value="none">None</option>
-	            <option value="custom">Custom</option>
-	          </select>
+	          <div class="chip-grid">
+	            <button class="chip-btn on" id="receipt-delivered" onclick="toggleReceipt('delivered')">Delivered</button>
+	            <button class="chip-btn" id="receipt-read" onclick="toggleReceipt('read')">Read</button>
+	            <button class="chip-btn" id="receipt-seen" onclick="toggleReceipt('seen')">Seen</button>
+	            <button class="chip-btn" id="receipt-custom-chip" onclick="toggleReceipt('custom')">Custom</button>
+	          </div>
 	          <input class="text-field" id="receiptCustom" type="text" value="Delivered" oninput="updReceiptCustom(this.value)" placeholder="Custom receipt text" style="display:none">
+	          <button class="mini-btn" onclick="clearReceipts()">Clear receipts</button>
 	        </div>
 	        <div class="tog-row">
 	          <div class="tog-label"><h4>Typing Indicator</h4></div>
@@ -840,16 +849,17 @@ Helen: I don't see you"></textarea>
   <footer class="foot">
 	    <div class="foot-lbl">Export Preview</div>
 	    <div class="foot-grp"><span>Format</span>
-	      <select class="foot-sel" id="exportFormat" onchange="updExport('format',this.value)"><option>MP4</option><option>MOV</option><option>GIF</option></select>
+		      <select class="foot-sel" id="exportFormat" onchange="updExport('format',this.value)"><option selected>WEBM</option><option>MP4</option><option>MOV</option><option>GIF</option></select>
 	    </div>
 	    <div class="foot-grp"><span>Resolution</span>
-	      <select class="foot-sel" id="exportResolution" onchange="updExport('resolution',this.value)"><option>1080p</option><option selected>4K</option><option>2K</option></select>
+		      <select class="foot-sel" id="exportResolution" onchange="updExport('resolution',this.value)"><option selected>1080p</option><option>2K</option><option>4K</option></select>
 	    </div>
 	    <div class="foot-grp"><span>Duration</span>
 	      <select class="foot-sel" id="exportDuration" onchange="updExport('duration',this.value)"><option>3 sec</option><option>5 sec</option><option selected>6 sec</option><option>8 sec</option><option>10 sec</option></select>
     </div>
-	    <div class="foot-note">Preview Mode Only<br>No video will be generated</div>
-	    <button class="rnd-btn" onclick="runPreview()">▶ Play Animation</button>
+		    <div class="foot-note">WebM exports locally<br>MP4/MOV/GIF require conversion</div>
+		    <button class="rnd-btn" onclick="runPreview()">▶ Play Animation</button>
+		    <button class="rnd-btn" id="btnExportAnim" onclick="downloadAnimation()">⬇ Download Animation</button>
   </footer>
 
 </div>
@@ -901,9 +911,9 @@ const S = {
 	  mode: 'phone',
 	  bg: 'dark',
 	  dateLabel: 'iMessage · Today 9:41 AM',
-	  receipt: { type:'delivered', custom:'Delivered' },
+	  receipt: { types:['delivered'], custom:'Delivered' },
 	  uiLight: false,
-	  export: { format:'MP4', resolution:'4K', duration:'6 sec' },
+	  export: { format:'WEBM', resolution:'1080p', duration:'6 sec' },
 	  spk: [
     { id:1, name:'Helen',  side:'left',  avatar:null, grad:LEFT_PALETTES[0] },
     { id:2, name:'Carlos', side:'right', avatar:null, grad:'linear-gradient(135deg,#2563eb,#1e40af)' },
@@ -986,6 +996,7 @@ const S = {
 	}
 
 	function syncUIFromState() {
+	  normalizeReceipt();
 	  document.getElementById('mbPhone')?.classList.toggle('on', S.mode==='phone');
 	  document.getElementById('mbClose')?.classList.toggle('on', S.mode==='closeup');
 	  document.getElementById('fc1')?.classList.toggle('on', S.mode==='phone');
@@ -1001,13 +1012,7 @@ const S = {
 	  if (bgLabel) bgLabel.textContent = BG_LABELS[S.bg] || S.bg;
 	  const dateInp = document.getElementById('dateLabelInput');
 	  if (dateInp) dateInp.value = S.dateLabel;
-	  const receiptSel = document.getElementById('receiptType');
-	  if (receiptSel) receiptSel.value = S.receipt.type;
-	  const custom = document.getElementById('receiptCustom');
-	  if (custom) {
-	    custom.value = S.receipt.custom || '';
-	    custom.style.display = S.receipt.type === 'custom' ? 'block' : 'none';
-	  }
+	  syncReceiptControls();
 	  document.getElementById('tog-typing')?.classList.toggle('on', S.opts.typing);
 	  document.getElementById('tog-ts')?.classList.toggle('on', S.opts.ts);
 	  document.getElementById('tog-del')?.classList.toggle('on', S.opts.del);
@@ -1214,11 +1219,27 @@ function formatTime(totalMins) {
 
 	let _firstMsgBaseTime = null; // last valid time (mins) of msg[0]; set on init + load
 
+	function normalizeReceipt() {
+	  if (!S.receipt) S.receipt = { types:['delivered'], custom:'Delivered' };
+	  if (S.receipt.type && !S.receipt.types) {
+	    S.receipt.types = S.receipt.type === 'none' ? [] : [S.receipt.type];
+	    delete S.receipt.type;
+	  }
+	  if (!Array.isArray(S.receipt.types)) S.receipt.types = [];
+	  S.receipt.types = S.receipt.types.filter((v, i, arr) =>
+	    ['delivered','read','seen','custom'].includes(v) && arr.indexOf(v) === i
+	  );
+	  if (typeof S.receipt.custom !== 'string') S.receipt.custom = 'Delivered';
+	}
+
 	function receiptText() {
 	  if (!S.opts.del) return '';
-	  if (S.receipt.type === 'none') return '';
-	  if (S.receipt.type === 'custom') return (S.receipt.custom || '').trim();
-	  return { delivered:'Delivered', read:'Read', seen:'Seen' }[S.receipt.type] || 'Delivered';
+	  normalizeReceipt();
+	  const labels = { delivered:'Delivered', read:'Read', seen:'Seen' };
+	  return S.receipt.types
+	    .map(type => type === 'custom' ? (S.receipt.custom || '').trim() : labels[type])
+	    .filter(Boolean)
+	    .join(' · ');
 	}
 
 	function updDateLabel(val) {
@@ -1227,12 +1248,36 @@ function formatTime(totalMins) {
 	  renderPhone(S.msgs); renderCU(S.msgs);
 	}
 
-	function updReceipt(type) {
+	function toggleReceipt(type) {
+	  normalizeReceipt();
 	  pushHistory();
-	  S.receipt.type = type;
-	  const custom = document.getElementById('receiptCustom');
-	  if (custom) custom.style.display = type === 'custom' ? 'block' : 'none';
+	  const active = S.receipt.types.includes(type);
+	  S.receipt.types = active
+	    ? S.receipt.types.filter(t => t !== type)
+	    : [...S.receipt.types, type];
+	  syncReceiptControls();
 	  renderPhone(S.msgs); renderCU(S.msgs);
+	}
+
+	function clearReceipts() {
+	  normalizeReceipt();
+	  pushHistory();
+	  S.receipt.types = [];
+	  syncReceiptControls();
+	  renderPhone(S.msgs); renderCU(S.msgs);
+	}
+
+	function syncReceiptControls() {
+	  normalizeReceipt();
+	  ['delivered','read','seen'].forEach(type => {
+	    document.getElementById(`receipt-${type}`)?.classList.toggle('on', S.receipt.types.includes(type));
+	  });
+	  document.getElementById('receipt-custom-chip')?.classList.toggle('on', S.receipt.types.includes('custom'));
+	  const custom = document.getElementById('receiptCustom');
+	  if (custom) {
+	    custom.value = S.receipt.custom || '';
+	    custom.style.display = S.receipt.types.includes('custom') ? 'block' : 'none';
+	  }
 	}
 
 	function updReceiptCustom(val) {
@@ -1740,51 +1785,170 @@ function onTpScroll(col) {
 	  if (inp) inp.value = timeStr;
 	}
 
-	async function downloadScreenshot() {
-	  const node = document.getElementById(S.mode === 'phone' ? 'phoneView' : 'closeupView');
-	  if (!node) return;
-	  const rect = node.getBoundingClientRect();
-	  const w = Math.round(rect.width);
-	  const h = Math.round(rect.height);
-	  if (!w || !h) { toast('Nothing to capture'); return; }
+	function activeExportNode() {
+	  return document.getElementById(S.mode === 'phone' ? 'phoneView' : 'closeupView');
+	}
 
+	function pageCssText() {
 	  let css = '';
 	  Array.from(document.styleSheets).forEach(sheet => {
 	    try {
 	      Array.from(sheet.cssRules || []).forEach(rule => css += rule.cssText + '\n');
 	    } catch {}
 	  });
+	  return css;
+	}
 
-	  const cloneNode = node.cloneNode(true);
-	  cloneNode.style.width = w + 'px';
-	  cloneNode.style.height = h + 'px';
-	  cloneNode.style.display = getComputedStyle(node).display;
-	  const html = `<style>${css}</style>${new XMLSerializer().serializeToString(cloneNode)}`;
-	  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">
-	    <foreignObject width="100%" height="100%">${html}</foreignObject>
-	  </svg>`;
-	  const url = URL.createObjectURL(new Blob([svg], { type:'image/svg+xml;charset=utf-8' }));
-	  const img = new Image();
-	  img.onload = () => {
-	    const scale = Math.min(2, window.devicePixelRatio || 1);
-	    const canvas = document.createElement('canvas');
-	    canvas.width = w * scale;
-	    canvas.height = h * scale;
-	    const ctx = canvas.getContext('2d');
-	    ctx.scale(scale, scale);
-	    ctx.drawImage(img, 0, 0);
-	    URL.revokeObjectURL(url);
+	function exportSize(node) {
+	  const rect = node.getBoundingClientRect();
+	  const srcW = Math.max(1, Math.round(rect.width));
+	  const srcH = Math.max(1, Math.round(rect.height));
+	  const aspect = srcW / srcH;
+	  const longEdge = { '1080p':1080, '2K':1440, '4K':2160 }[S.export.resolution] || 1080;
+	  if (aspect >= 1) return { srcW, srcH, w:longEdge, h:Math.round(longEdge / aspect) };
+	  return { srcW, srcH, w:Math.round(longEdge * aspect), h:longEdge };
+	}
+
+	function drawNodeToCanvas(node, canvas, ctx, css) {
+	  return new Promise((resolve, reject) => {
+	    const { srcW, srcH } = exportSize(node);
+	    const cloneNode = node.cloneNode(true);
+	    cloneNode.style.width = srcW + 'px';
+	    cloneNode.style.height = srcH + 'px';
+	    cloneNode.style.display = getComputedStyle(node).display;
+	    const html = `<style>${css}</style>${new XMLSerializer().serializeToString(cloneNode)}`;
+	    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${srcW}" height="${srcH}">
+	      <foreignObject width="100%" height="100%">${html}</foreignObject>
+	    </svg>`;
+	    const url = URL.createObjectURL(new Blob([svg], { type:'image/svg+xml;charset=utf-8' }));
+	    const img = new Image();
+	    img.onload = () => {
+	      ctx.clearRect(0, 0, canvas.width, canvas.height);
+	      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+	      URL.revokeObjectURL(url);
+	      resolve();
+	    };
+	    img.onerror = () => {
+	      URL.revokeObjectURL(url);
+	      reject(new Error('Frame render failed'));
+	    };
+	    img.src = url;
+	  });
+	}
+
+	function sleep(ms) {
+	  return new Promise(resolve => setTimeout(resolve, ms));
+	}
+
+	async function downloadScreenshot() {
+	  const node = activeExportNode();
+	  if (!node) return;
+	  const size = exportSize(node);
+	  if (!size.srcW || !size.srcH) { toast('Nothing to capture'); return; }
+	  const canvas = document.createElement('canvas');
+	  canvas.width = size.w;
+	  canvas.height = size.h;
+	  const ctx = canvas.getContext('2d');
+	  try {
+	    await drawNodeToCanvas(node, canvas, ctx, pageCssText());
 	    const a = document.createElement('a');
 	    a.download = `text-simulator-${S.mode}.png`;
 	    a.href = canvas.toDataURL('image/png');
 	    a.click();
 	    toast('Screenshot saved');
-	  };
-	  img.onerror = () => {
-	    URL.revokeObjectURL(url);
+	  } catch {
 	    toast('Screenshot failed in this browser');
+	  }
+	}
+
+	async function downloadAnimation() {
+	  const node = activeExportNode();
+	  const btn = document.getElementById('btnExportAnim');
+	  if (!node) return;
+	  if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream) {
+	    toast('Video export is not supported in this browser');
+	    return;
+	  }
+	  if (!S.msgs.length) { toast('Add some messages first!'); return; }
+	  if (S.export.format !== 'WEBM') {
+	    S.export.format = 'WEBM';
+	    document.getElementById('exportFormat').value = 'WEBM';
+	    toast('Exporting WebM; MP4/MOV/GIF need conversion');
+	  } else {
+	    toast('Preparing WebM export...');
+	  }
+
+	  if (S.running) stopPreview();
+	  const size = exportSize(node);
+	  const canvas = document.createElement('canvas');
+	  canvas.width = size.w;
+	  canvas.height = size.h;
+	  const ctx = canvas.getContext('2d');
+	  const css = pageCssText();
+	  const fps = 12;
+	  const stream = canvas.captureStream(fps);
+	  const mime = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
+	    ? 'video/webm;codecs=vp9'
+	    : (MediaRecorder.isTypeSupported('video/webm;codecs=vp8') ? 'video/webm;codecs=vp8' : 'video/webm');
+	  const chunks = [];
+	  const recorder = new MediaRecorder(stream, { mimeType:mime, videoBitsPerSecond:3500000 });
+	  recorder.ondataavailable = e => { if (e.data?.size) chunks.push(e.data); };
+	  const done = new Promise(resolve => recorder.onstop = resolve);
+	  const targetMs = (parseInt(S.export.duration, 10) || 6) * 1000;
+	  const naturalMs = 350 + S.msgs.reduce((sum, m) => sum + Math.round((m.delay || 1.5) * 1000) + 650, 0) + 500;
+	  const durationScale = targetMs / Math.max(1, naturalMs);
+
+	  const captureFor = async (ms) => {
+	    const frames = Math.max(1, Math.ceil(ms / (1000 / fps)));
+	    for (let i = 0; i < frames; i++) {
+	      await drawNodeToCanvas(node, canvas, ctx, css);
+	      await sleep(1000 / fps);
+	    }
 	  };
-	  img.src = url;
+
+	  try {
+	    btn?.classList.add('busy');
+	    if (btn) btn.textContent = 'Rendering...';
+	    S.running = true;
+	    document.getElementById('pMsgs').innerHTML = S.dateLabel ? `<div class="p-date">${esc(S.dateLabel)}</div>` : '';
+	    document.getElementById('closeupView').innerHTML = S.dateLabel ? `<div class="p-date">${esc(S.dateLabel)}</div>` : '';
+	    recorder.start();
+	    await captureFor(350 * durationScale);
+
+	    const revealed = [];
+	    for (const m of S.msgs) {
+	      const s = spk(m.sid);
+	      showTyp(s);
+	      await captureFor(Math.round((m.delay || 1.5) * 1000) * durationScale);
+	      hideTyp();
+	      revealed.push(m);
+	      renderPhone([...revealed], true);
+	      renderCU([...revealed], true);
+	      await captureFor(650 * durationScale);
+	    }
+	    await captureFor(500 * durationScale);
+	    recorder.stop();
+	    await done;
+
+	    const blob = new Blob(chunks, { type:'video/webm' });
+	    const url = URL.createObjectURL(blob);
+	    const a = document.createElement('a');
+	    a.download = `text-simulator-${S.mode}.webm`;
+	    a.href = url;
+	    a.click();
+	    setTimeout(() => URL.revokeObjectURL(url), 1000);
+	    toast('Animation downloaded');
+	  } catch (err) {
+	    if (recorder.state !== 'inactive') recorder.stop();
+	    toast('Animation export failed');
+	  } finally {
+	    S.running = false;
+	    hideTyp();
+	    renderPhone(S.msgs);
+	    renderCU(S.msgs);
+	    btn?.classList.remove('busy');
+	    if (btn) btn.textContent = '⬇ Download Animation';
+	  }
 	}
 
 	/* ══ TOAST ══ */
