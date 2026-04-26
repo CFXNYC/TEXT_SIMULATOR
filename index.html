@@ -167,12 +167,15 @@
     .msg-list { display: flex; flex-direction: column; gap: 3px; max-height: 240px; overflow-y: auto; margin-bottom: 6px; }
     .msg-list::-webkit-scrollbar { width: 2px; }
 
-    .mi {
-      display: flex; align-items: center; gap: 5px;
-      background: var(--card); border: 1px solid var(--b);
-      border-radius: 6px; padding: 5px 7px; transition: border-color 0.15s;
-    }
-    .mi:focus-within { border-color: var(--t2); }
+	    .mi {
+	      display: flex; align-items: center; gap: 5px;
+	      background: var(--card); border: 1px solid var(--b);
+	      border-radius: 6px; padding: 5px 7px; transition: border-color 0.15s;
+	    }
+	    .mi:focus-within { border-color: var(--t2); }
+	    .mi.dragging { opacity:.45; border-color:var(--accent); }
+	    .mi-drag { cursor:grab; color:var(--t3); font-size:12px; padding:0 2px; user-select:none; }
+	    .mi-drag:active { cursor:grabbing; }
 
     .mi-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
     .d-left  { background: var(--t3); }
@@ -192,16 +195,44 @@
       background: none; border: none; cursor: pointer;
       color: var(--t3); font-size: 12px; line-height: 1;
       transition: color 0.15s; flex-shrink: 0;
-    }
-    .mi-del:hover { color: #ef4444; }
+	    }
+	    .mi-del:hover { color: #ef4444; }
+	    .mi-act {
+	      background:var(--card2); border:1px solid var(--b); color:var(--t2);
+	      border-radius:4px; font-size:10px; line-height:1; padding:3px 5px;
+	      cursor:pointer; font-family:inherit; flex-shrink:0;
+	    }
+	    .mi-act:hover { color:var(--t1); border-color:var(--t2); }
 
-    .add-btn {
+	    .add-btn {
       background: var(--card); border: 1px dashed rgba(255,255,255,0.15);
       color: var(--t2); padding: 7px; border-radius: 6px;
       font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit;
       width: 100%; text-align: center; transition: all 0.15s;
-    }
-    .add-btn:hover { border-color: var(--t1); color: var(--t1); background: var(--card2); }
+	    }
+	    .add-btn:hover { border-color: var(--t1); color: var(--t1); background: var(--card2); }
+
+	    .script-box {
+	      width:100%; min-height:108px; resize:vertical;
+	      background:var(--card); border:1px solid var(--b); border-radius:7px;
+	      color:var(--t1); font-family:inherit; font-size:11px; line-height:1.45;
+	      padding:8px; outline:none;
+	    }
+	    .script-box:focus { border-color:var(--t2); }
+	    .mini-actions { display:flex; gap:6px; margin-top:7px; }
+	    .mini-btn {
+	      flex:1; background:var(--card2); border:1px solid var(--b);
+	      color:var(--t2); padding:7px 8px; border-radius:6px;
+	      font-size:10px; font-weight:600; cursor:pointer; font-family:inherit;
+	    }
+	    .mini-btn:hover { color:var(--t1); border-color:var(--t2); }
+	    .field-row { display:flex; flex-direction:column; gap:6px; }
+	    .text-field {
+	      width:100%; background:var(--card); border:1px solid var(--b);
+	      color:var(--t1); padding:8px 9px; border-radius:6px;
+	      font-family:inherit; font-size:12px; outline:none;
+	    }
+	    .text-field:focus { border-color:var(--t2); }
 
     /* Toggles */
     .tog-row {
@@ -230,11 +261,12 @@
     .pv-center { flex: 1; overflow: hidden; position: relative; }
 
     /* ── PHONE VIEW ── */
-    #phoneView {
-      width: 100%; height: 100%;
-      display: flex; align-items: center; justify-content: center;
-      transition: background 0.4s ease;
-    }
+	    #phoneView {
+	      width: 100%; height: 100%;
+	      display: flex; align-items: center; justify-content: center;
+	      padding: 24px;
+	      transition: background 0.4s ease;
+	    }
     /* background themes */
     #phoneView.bg-dark, #closeupView.bg-dark {
       background:
@@ -247,11 +279,12 @@
     #phoneView.bg-white, #closeupView.bg-white { background: #FFFFFF; }
     #phoneView.bg-green, #closeupView.bg-green { background: #00b140; }
 
-    .p-shell {
-      filter: drop-shadow(0 40px 80px rgba(0,0,0,.92)) drop-shadow(0 0 80px rgba(0,0,0,.5));
-      transform: scale(1.18);
-      transform-origin: center center;
-    }
+	    .p-shell {
+	      filter: drop-shadow(0 40px 80px rgba(0,0,0,.92)) drop-shadow(0 0 80px rgba(0,0,0,.5));
+	      transform: scale(var(--phone-scale, 1.18));
+	      transform-origin: center center;
+	      transition: transform .25s ease;
+	    }
 
     /* ── PHONE BODY (+20% from 294×600) ── */
     .p-body {
@@ -627,8 +660,9 @@
       .mi-time-wrap,
       .mi-delay-wrap { white-space:nowrap; }
 
-      /* Close-up view padding */
-      #closeupView { padding:24px 20px; }
+	      /* Close-up view padding */
+	      #phoneView { padding:18px 12px; }
+	      #closeupView { padding:24px 20px; }
 
       /* Bubble font sizes stay legible */
       .cu-bub { font-size:15px; }
@@ -653,10 +687,12 @@
       <button class="mode-btn on" id="mbPhone" onclick="setMode('phone')">📱 Full Phone</button>
       <button class="mode-btn"    id="mbClose" onclick="setMode('closeup')">🔎 Close-Up</button>
     </div>
-    <div class="hdr-actions">
-      <button class="btn-gen" id="btnGen" onclick="runPreview()">▶ Generate Preview</button>
-      <button class="btn-dl"  onclick="toast('Download requires render — coming soon')">⬇ Download</button>
-    </div>
+	    <div class="hdr-actions">
+	      <button class="btn-dl"  onclick="undoChange()">↶ Undo</button>
+	      <button class="btn-dl"  onclick="redoChange()">↷ Redo</button>
+	      <button class="btn-gen" id="btnGen" onclick="runPreview()">▶ Play Animation</button>
+	      <button class="btn-dl"  onclick="downloadScreenshot()">⬇ Screenshot</button>
+	    </div>
   </header>
 
   <!-- MAIN -->
@@ -697,27 +733,51 @@
       </div>
 
       <!-- 3. CONVERSATION -->
-      <div class="sec">
-        <div class="sec-title">3. Conversation Editor</div>
-        <div class="msg-list" id="msgList"></div>
-        <button class="add-btn" onclick="addMsg()">+ Add Message</button>
-      </div>
+	      <div class="sec">
+	        <div class="sec-title">3. Conversation Editor</div>
+	        <div class="msg-list" id="msgList"></div>
+	        <button class="add-btn" onclick="addMsg()">+ Add Message</button>
+	      </div>
 
-      <!-- 4. OPTIONS -->
-      <div class="sec">
-        <div class="sec-title">4. Message Options</div>
-        <div class="tog-row">
-          <div class="tog-label"><h4>Typing Indicator</h4></div>
-          <div class="tog on" id="tog-typing" onclick="togOpt('typing',this)"><div class="tog-k"></div></div>
+	      <div class="sec">
+	        <div class="sec-title">Script Import</div>
+	        <textarea class="script-box" id="scriptImport" placeholder="Helen: You coming or not?
+Carlos: I'm outside
+Helen: I don't see you"></textarea>
+	        <div class="mini-actions">
+	          <button class="mini-btn" onclick="importScript(false)">Append</button>
+	          <button class="mini-btn" onclick="importScript(true)">Replace</button>
+	        </div>
+	      </div>
+
+	      <!-- 4. OPTIONS -->
+	      <div class="sec">
+	        <div class="sec-title">4. Message Options</div>
+	        <div class="field-row" style="margin-bottom:8px">
+	          <input class="text-field" id="dateLabelInput" type="text" value="iMessage · Today 9:41 AM" oninput="updDateLabel(this.value)" placeholder="Date separator">
+	        </div>
+	        <div class="field-row" style="margin-bottom:8px">
+	          <select class="foot-sel" id="receiptType" onchange="updReceipt(this.value)">
+	            <option value="delivered" selected>Delivered</option>
+	            <option value="read">Read</option>
+	            <option value="seen">Seen</option>
+	            <option value="none">None</option>
+	            <option value="custom">Custom</option>
+	          </select>
+	          <input class="text-field" id="receiptCustom" type="text" value="Delivered" oninput="updReceiptCustom(this.value)" placeholder="Custom receipt text" style="display:none">
+	        </div>
+	        <div class="tog-row">
+	          <div class="tog-label"><h4>Typing Indicator</h4></div>
+	          <div class="tog on" id="tog-typing" onclick="togOpt('typing',this)"><div class="tog-k"></div></div>
         </div>
         <div class="tog-row">
           <div class="tog-label"><h4>Show Timestamps</h4></div>
           <div class="tog on" id="tog-ts" onclick="togOpt('ts',this)"><div class="tog-k"></div></div>
         </div>
-        <div class="tog-row">
-          <div class="tog-label"><h4>Show Delivered Status</h4></div>
-          <div class="tog on" id="tog-del" onclick="togOpt('del',this)"><div class="tog-k"></div></div>
-        </div>
+	        <div class="tog-row">
+	          <div class="tog-label"><h4>Show Read Receipt</h4></div>
+	          <div class="tog on" id="tog-del" onclick="togOpt('del',this)"><div class="tog-k"></div></div>
+	        </div>
         <div class="tog-row">
           <div class="tog-label"><h4>Avatars in Close-Up</h4></div>
           <div class="tog on" id="tog-av" onclick="togOpt('av',this)"><div class="tog-k"></div></div>
@@ -778,18 +838,18 @@
 
   <!-- FOOTER -->
   <footer class="foot">
-    <div class="foot-lbl">Export Preview</div>
-    <div class="foot-grp"><span>Format</span>
-      <select class="foot-sel"><option>MP4</option><option>MOV</option><option>GIF</option></select>
+	    <div class="foot-lbl">Export Preview</div>
+	    <div class="foot-grp"><span>Format</span>
+	      <select class="foot-sel" id="exportFormat" onchange="updExport('format',this.value)"><option>MP4</option><option>MOV</option><option>GIF</option></select>
+	    </div>
+	    <div class="foot-grp"><span>Resolution</span>
+	      <select class="foot-sel" id="exportResolution" onchange="updExport('resolution',this.value)"><option>1080p</option><option selected>4K</option><option>2K</option></select>
+	    </div>
+	    <div class="foot-grp"><span>Duration</span>
+	      <select class="foot-sel" id="exportDuration" onchange="updExport('duration',this.value)"><option>3 sec</option><option>5 sec</option><option selected>6 sec</option><option>8 sec</option><option>10 sec</option></select>
     </div>
-    <div class="foot-grp"><span>Resolution</span>
-      <select class="foot-sel"><option>1080p</option><option selected>4K</option><option>2K</option></select>
-    </div>
-    <div class="foot-grp"><span>Duration</span>
-      <select class="foot-sel"><option>3 sec</option><option>5 sec</option><option selected>6 sec</option><option>8 sec</option><option>10 sec</option></select>
-    </div>
-    <div class="foot-note">Preview Mode Only<br>No video will be generated</div>
-    <button class="rnd-btn" onclick="runPreview()">▶ Render Preview</button>
+	    <div class="foot-note">Preview Mode Only<br>No video will be generated</div>
+	    <button class="rnd-btn" onclick="runPreview()">▶ Play Animation</button>
   </footer>
 
 </div>
@@ -838,9 +898,13 @@ const HDR_ICONS = `<div class="p-hdr-ic">
 
 /* ══ STATE ══ */
 const S = {
-  mode: 'phone',
-  bg: 'dark',
-  spk: [
+	  mode: 'phone',
+	  bg: 'dark',
+	  dateLabel: 'iMessage · Today 9:41 AM',
+	  receipt: { type:'delivered', custom:'Delivered' },
+	  uiLight: false,
+	  export: { format:'MP4', resolution:'4K', duration:'6 sec' },
+	  spk: [
     { id:1, name:'Helen',  side:'left',  avatar:null, grad:LEFT_PALETTES[0] },
     { id:2, name:'Carlos', side:'right', avatar:null, grad:'linear-gradient(135deg,#2563eb,#1e40af)' },
   ],
@@ -853,40 +917,137 @@ const S = {
   opts: { typing:true, ts:true, del:true, av:true },
   nid: 5,
   nspk: 3,
-  running: false,
-};
+	  running: false,
+	};
 
-const spk = (id) => S.spk.find(s => s.id === id);
-const esc = (s) => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+	const spk = (id) => S.spk.find(s => s.id === id);
+	const esc = (s) => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+	const clone = (obj) => JSON.parse(JSON.stringify(obj));
+
+	const HISTORY_KEYS = ['mode','bg','dateLabel','receipt','uiLight','export','spk','msgs','opts','nid','nspk'];
+	const hist = { undo:[], redo:[], locked:false };
+
+	function snap() {
+	  const out = {};
+	  HISTORY_KEYS.forEach(k => out[k] = clone(S[k]));
+	  return out;
+	}
+
+	function restoreSnap(data) {
+	  hist.locked = true;
+	  HISTORY_KEYS.forEach(k => S[k] = clone(data[k]));
+	  syncUIFromState();
+	  hist.locked = false;
+	}
+
+	function pushHistory() {
+	  if (hist.locked || S.running) return;
+	  hist.undo.push(snap());
+	  if (hist.undo.length > 80) hist.undo.shift();
+	  hist.redo = [];
+	}
+
+	function undoChange() {
+	  if (!hist.undo.length) { toast('Nothing to undo'); return; }
+	  hist.redo.push(snap());
+	  restoreSnap(hist.undo.pop());
+	  toast('Undone');
+	}
+
+	function redoChange() {
+	  if (!hist.redo.length) { toast('Nothing to redo'); return; }
+	  hist.undo.push(snap());
+	  restoreSnap(hist.redo.pop());
+	  toast('Redone');
+	}
 
 /* ══ INIT ══ */
-document.addEventListener('DOMContentLoaded', () => {
-  _firstMsgBaseTime = parseTime(S.msgs[0]?.time || '9:41 AM');
-  renderSpkList();
-  renderList();
-  renderPhone(S.msgs);
-  renderCU(S.msgs);
-  renderConvSlots();
-  initSidebarResize();
-});
+	document.addEventListener('DOMContentLoaded', () => {
+	  _firstMsgBaseTime = parseTime(S.msgs[0]?.time || '9:41 AM');
+	  syncUIFromState();
+	  initSidebarResize();
+	  fitPhonePreview();
+	  window.addEventListener('resize', fitPhonePreview);
+	});
+
+	function fitPhonePreview() {
+	  const view = document.getElementById('phoneView');
+	  const shell = document.querySelector('.p-shell');
+	  if (!view || !shell) return;
+	  const styles = getComputedStyle(view);
+	  const padX = parseFloat(styles.paddingLeft) + parseFloat(styles.paddingRight);
+	  const padY = parseFloat(styles.paddingTop) + parseFloat(styles.paddingBottom);
+	  const availW = Math.max(0, view.clientWidth - padX);
+	  const availH = Math.max(0, view.clientHeight - padY);
+	  const fit = Math.min(availW / 353, availH / 720);
+	  const maxScale = window.matchMedia('(max-width:700px)').matches ? 0.74 : 1.18;
+	  const scale = Math.max(0.42, Math.min(maxScale, fit));
+	  shell.style.setProperty('--phone-scale', scale.toFixed(3));
+	}
+
+	function syncUIFromState() {
+	  document.getElementById('mbPhone')?.classList.toggle('on', S.mode==='phone');
+	  document.getElementById('mbClose')?.classList.toggle('on', S.mode==='closeup');
+	  document.getElementById('fc1')?.classList.toggle('on', S.mode==='phone');
+	  document.getElementById('fc2')?.classList.toggle('on', S.mode==='closeup');
+	  const pv = document.getElementById('phoneView');
+	  const cv = document.getElementById('closeupView');
+	  if (pv) { pv.className = `bg-${S.bg}`; pv.style.display = S.mode === 'phone' ? 'flex' : 'none'; }
+	  if (cv) { cv.className = `bg-${S.bg}`; cv.style.display = S.mode === 'closeup' ? 'flex' : 'none'; }
+	  document.querySelectorAll('.bg-sw').forEach(sw => sw.classList.remove('on'));
+	  const bgSw = document.querySelector(`.bg-sw-${S.bg}`);
+	  bgSw?.classList.add('on');
+	  const bgLabel = document.getElementById('bgLabel');
+	  if (bgLabel) bgLabel.textContent = BG_LABELS[S.bg] || S.bg;
+	  const dateInp = document.getElementById('dateLabelInput');
+	  if (dateInp) dateInp.value = S.dateLabel;
+	  const receiptSel = document.getElementById('receiptType');
+	  if (receiptSel) receiptSel.value = S.receipt.type;
+	  const custom = document.getElementById('receiptCustom');
+	  if (custom) {
+	    custom.value = S.receipt.custom || '';
+	    custom.style.display = S.receipt.type === 'custom' ? 'block' : 'none';
+	  }
+	  document.getElementById('tog-typing')?.classList.toggle('on', S.opts.typing);
+	  document.getElementById('tog-ts')?.classList.toggle('on', S.opts.ts);
+	  document.getElementById('tog-del')?.classList.toggle('on', S.opts.del);
+	  document.getElementById('tog-av')?.classList.toggle('on', S.opts.av);
+	  document.getElementById('tog-uiLight')?.classList.toggle('on', S.uiLight);
+	  const fmt = document.getElementById('exportFormat');
+	  const res = document.getElementById('exportResolution');
+	  const dur = document.getElementById('exportDuration');
+	  if (fmt) fmt.value = S.export.format;
+	  if (res) res.value = S.export.resolution;
+	  if (dur) dur.value = S.export.duration;
+	  document.querySelector('.p-body')?.classList.toggle('ui-light', S.uiLight);
+	  renderSpkList();
+	  renderList();
+	  renderPhone(S.msgs);
+	  renderCU(S.msgs);
+	  renderConvSlots();
+	  fitPhonePreview();
+	}
 
 /* ══ MODE ══ */
-function setMode(m) {
-  S.mode = m;
+	function setMode(m) {
+	  if (S.mode !== m) pushHistory();
+	  S.mode = m;
   document.getElementById('mbPhone').classList.toggle('on', m==='phone');
   document.getElementById('mbClose').classList.toggle('on', m==='closeup');
   document.getElementById('fc1').classList.toggle('on', m==='phone');
   document.getElementById('fc2').classList.toggle('on', m==='closeup');
-  document.getElementById('phoneView').style.display   = m==='phone'   ? 'flex' : 'none';
-  document.getElementById('closeupView').style.display = m==='closeup' ? 'flex' : 'none';
-  if (m==='closeup') renderCU(S.msgs);
-}
+	  document.getElementById('phoneView').style.display   = m==='phone'   ? 'flex' : 'none';
+	  document.getElementById('closeupView').style.display = m==='closeup' ? 'flex' : 'none';
+	  if (m==='closeup') renderCU(S.msgs);
+	  fitPhonePreview();
+	}
 
 /* ══ BACKGROUND ══ */
 const BG_LABELS = { dark:'Cinematic Dark', black:'Pure Black', white:'Pure White', green:'#00b140 Green' };
 
-function setBg(val, el) {
-  S.bg = val;
+	function setBg(val, el) {
+	  if (S.bg !== val) pushHistory();
+	  S.bg = val;
   document.querySelectorAll('.bg-sw').forEach(s => s.classList.remove('on'));
   el.classList.add('on');
   document.getElementById('bgLabel').textContent = BG_LABELS[val];
@@ -934,8 +1095,9 @@ function renderSpkList() {
   renderPhoneHeader();
 }
 
-function addSpeaker() {
-  if (S.spk.length >= 6) return;
+	function addSpeaker() {
+	  if (S.spk.length >= 6) return;
+	  pushHistory();
   const leftCount = S.spk.filter(s => s.side === 'left').length;
   S.spk.push({
     id: S.nspk++, name: 'Speaker ' + (S.spk.length + 1), side: 'left', avatar: null,
@@ -944,29 +1106,32 @@ function addSpeaker() {
   renderSpkList(); renderList(); renderPhone(S.msgs); renderCU(S.msgs);
 }
 
-function removeSpeaker(id) {
-  if (S.spk.filter(s => s.side === 'left').length <= 1) return;
+	function removeSpeaker(id) {
+	  if (S.spk.filter(s => s.side === 'left').length <= 1) return;
+	  pushHistory();
   S.spk = S.spk.filter(s => s.id !== id);
   const fallback = S.spk.find(s => s.side === 'left') || S.spk[0];
   S.msgs = S.msgs.map(m => m.sid === id ? {...m, sid: fallback.id} : m);
   renderSpkList(); renderList(); renderPhone(S.msgs); renderCU(S.msgs);
 }
 
-function updName(id, val) {
-  const s = spk(id); if (!s) return;
-  s.name = val;
+	function updName(id, val) {
+	  const s = spk(id); if (!s) return;
+	  pushHistory();
+	  s.name = val;
   const ai = document.getElementById('ai'+id);
   if (ai) ai.textContent = val.charAt(0).toUpperCase() || '?';
   renderPhoneHeader();
   renderList(); renderPhone(S.msgs); renderCU(S.msgs);
 }
 
-function uploadAv(id, inp) {
-  const file = inp.files[0]; if (!file) return;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const s = spk(id); if (!s) return;
-    s.avatar = e.target.result;
+	function uploadAv(id, inp) {
+	  const file = inp.files[0]; if (!file) return;
+	  const reader = new FileReader();
+	  reader.onload = (e) => {
+	    const s = spk(id); if (!s) return;
+	    pushHistory();
+	    s.avatar = e.target.result;
     const ac = document.getElementById('ac'+id);
     if (ac) ac.innerHTML = `<img src="${esc(s.avatar)}" alt="${esc(s.name)}">`;
     renderPhoneHeader(); renderPhone(S.msgs); renderCU(S.msgs);
@@ -1006,24 +1171,28 @@ function avHtml(s, cls) {
 }
 
 /* ══ MESSAGE LIST ══ */
-function renderList() {
-  document.getElementById('msgList').innerHTML = S.msgs.map(m => {
-    const s = spk(m.sid);
-    const isR = s?.side === 'right';
-    return `<div class="mi" id="mi${m.id}">
-      <div class="mi-dot ${isR?'d-right':'d-left'}"></div>
-      <select class="mi-sel ${isR?'r':''}" onchange="updSid(${m.id},this)">
-        ${S.spk.map(sp=>`<option value="${sp.id}" ${sp.id===m.sid?'selected':''}>${sp.name}</option>`).join('')}
-      </select>
-      <input class="mi-inp" type="text" value="${esc(m.text)}" oninput="updTxt(${m.id},this.value)" placeholder="Message…">
-      <span class="mi-time-wrap" title="Message timestamp"><button class="mi-time-btn" onclick="openTimePicker(${m.id},this)" title="Pick time">🕐</button><input class="mi-time" type="text" value="${esc(m.time||'9:41 AM')}" oninput="updTime(${m.id},this.value)" placeholder="9:41 AM"></span>
-      <span class="mi-delay-wrap" title="Typing delay in seconds">⏱<input class="mi-delay" type="number" min="0.3" max="10" step="0.5" value="${m.delay||1.5}" oninput="updDelay(${m.id},this.value)">s</span>
-      <button class="mi-del" onclick="delMsg(${m.id})">✕</button>
-    </div>`;
-  }).join('');
-}
+	function renderList() {
+	  document.getElementById('msgList').innerHTML = S.msgs.map(m => {
+	    const s = spk(m.sid);
+	    const isR = s?.side === 'right';
+	    return `<div class="mi" id="mi${m.id}" draggable="true" ondragstart="dragMsgStart(event,${m.id})" ondragover="dragMsgOver(event)" ondrop="dropMsg(event,${m.id})" ondragend="dragMsgEnd(event)">
+	      <span class="mi-drag" title="Drag to reorder">☰</span>
+	      <div class="mi-dot ${isR?'d-right':'d-left'}"></div>
+	      <select class="mi-sel ${isR?'r':''}" onchange="updSid(${m.id},this)">
+	        ${S.spk.map(sp=>`<option value="${sp.id}" ${sp.id===m.sid?'selected':''}>${sp.name}</option>`).join('')}
+	      </select>
+	      <input class="mi-inp" type="text" value="${esc(m.text)}" oninput="updTxt(${m.id},this.value)" placeholder="Message…">
+	      <span class="mi-time-wrap" title="Message timestamp"><button class="mi-time-btn" onclick="openTimePicker(${m.id},this)" title="Pick time">🕐</button><input class="mi-time" type="text" value="${esc(m.time||'9:41 AM')}" oninput="updTime(${m.id},this.value)" placeholder="9:41 AM"></span>
+	      <span class="mi-delay-wrap" title="Typing delay in seconds">⏱<input class="mi-delay" type="number" min="0.3" max="10" step="0.5" value="${m.delay||1.5}" oninput="updDelay(${m.id},this.value)">s</span>
+	      <button class="mi-act" onclick="insertMsg(${m.id},'above')" title="Insert above">↑</button>
+	      <button class="mi-act" onclick="insertMsg(${m.id},'below')" title="Insert below">↓</button>
+	      <button class="mi-act" onclick="dupMsg(${m.id})" title="Duplicate">⧉</button>
+	      <button class="mi-del" onclick="delMsg(${m.id})">✕</button>
+	    </div>`;
+	  }).join('');
+	}
 
-function parseTime(str) {
+	function parseTime(str) {
   const m = String(str).trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
   if (!m) return null;
   let h = parseInt(m[1]);
@@ -1043,10 +1212,38 @@ function formatTime(totalMins) {
   return `${h}:${String(min).padStart(2,'0')} ${ampm}`;
 }
 
-let _firstMsgBaseTime = null; // last valid time (mins) of msg[0]; set on init + load
+	let _firstMsgBaseTime = null; // last valid time (mins) of msg[0]; set on init + load
 
-function updTime(id, val) {
-  const idx = S.msgs.findIndex(m => m.id === id);
+	function receiptText() {
+	  if (!S.opts.del) return '';
+	  if (S.receipt.type === 'none') return '';
+	  if (S.receipt.type === 'custom') return (S.receipt.custom || '').trim();
+	  return { delivered:'Delivered', read:'Read', seen:'Seen' }[S.receipt.type] || 'Delivered';
+	}
+
+	function updDateLabel(val) {
+	  pushHistory();
+	  S.dateLabel = val || '';
+	  renderPhone(S.msgs); renderCU(S.msgs);
+	}
+
+	function updReceipt(type) {
+	  pushHistory();
+	  S.receipt.type = type;
+	  const custom = document.getElementById('receiptCustom');
+	  if (custom) custom.style.display = type === 'custom' ? 'block' : 'none';
+	  renderPhone(S.msgs); renderCU(S.msgs);
+	}
+
+	function updReceiptCustom(val) {
+	  pushHistory();
+	  S.receipt.custom = val;
+	  renderPhone(S.msgs); renderCU(S.msgs);
+	}
+
+	function updTime(id, val) {
+	  pushHistory();
+	  const idx = S.msgs.findIndex(m => m.id === id);
   const m = S.msgs[idx];
   if (!m) return;
 
@@ -1071,13 +1268,15 @@ function updTime(id, val) {
   renderPhone(S.msgs); renderCU(S.msgs);
 }
 
-function updDelay(id, val) {
-  const m = S.msgs.find(m => m.id === id);
-  if (m) m.delay = Math.max(0.3, parseFloat(val) || 1.5);
-}
+	function updDelay(id, val) {
+	  pushHistory();
+	  const m = S.msgs.find(m => m.id === id);
+	  if (m) m.delay = Math.max(0.3, parseFloat(val) || 1.5);
+	}
 
-function updSid(id, sel) {
-  const m = S.msgs.find(m=>m.id===id); if (!m) return;
+	function updSid(id, sel) {
+	  pushHistory();
+	  const m = S.msgs.find(m=>m.id===id); if (!m) return;
   m.sid = parseInt(sel.value);
   const s = spk(m.sid);
   const isR = s?.side==='right';
@@ -1086,46 +1285,131 @@ function updSid(id, sel) {
   renderPhone(S.msgs); renderCU(S.msgs);
 }
 
-function updTxt(id, val) {
-  const m = S.msgs.find(m=>m.id===id);
-  if (m) { m.text=val; renderPhone(S.msgs); renderCU(S.msgs); }
-}
+	function updTxt(id, val) {
+	  pushHistory();
+	  const m = S.msgs.find(m=>m.id===id);
+	  if (m) { m.text=val; renderPhone(S.msgs); renderCU(S.msgs); }
+	}
 
-function delMsg(id) {
-  S.msgs = S.msgs.filter(m=>m.id!==id);
-  renderList(); renderPhone(S.msgs); renderCU(S.msgs);
-}
+	function delMsg(id) {
+	  pushHistory();
+	  S.msgs = S.msgs.filter(m=>m.id!==id);
+	  renderList(); renderPhone(S.msgs); renderCU(S.msgs);
+	}
 
-function addMsg() {
-  const last = S.msgs[S.msgs.length-1];
+	function addMsg() {
+	  pushHistory();
+	  const last = S.msgs[S.msgs.length-1];
   const nextSpk = last ? (S.spk.find(s=>s.id!==last.sid)||S.spk[0]) : S.spk[0];
   S.msgs.push({ id:S.nid++, sid:nextSpk.id, text:'', time:last?.time||'9:41 AM', delay:1.5 });
   renderList(); renderPhone(S.msgs); renderCU(S.msgs);
   setTimeout(() => {
     const ins = document.querySelectorAll('.mi-inp');
     ins[ins.length-1]?.focus();
-  }, 40);
-}
+	  }, 40);
+	}
+
+	function insertMsg(id, pos) {
+	  pushHistory();
+	  const idx = S.msgs.findIndex(m => m.id === id);
+	  if (idx < 0) return;
+	  const base = S.msgs[idx];
+	  const at = pos === 'above' ? idx : idx + 1;
+	  S.msgs.splice(at, 0, { id:S.nid++, sid:base.sid, text:'', time:base.time || '9:41 AM', delay:base.delay || 1.5 });
+	  renderList(); renderPhone(S.msgs); renderCU(S.msgs);
+	  setTimeout(() => document.querySelector(`#mi${S.msgs[at].id} .mi-inp`)?.focus(), 40);
+	}
+
+	function dupMsg(id) {
+	  pushHistory();
+	  const idx = S.msgs.findIndex(m => m.id === id);
+	  if (idx < 0) return;
+	  S.msgs.splice(idx + 1, 0, { ...clone(S.msgs[idx]), id:S.nid++ });
+	  renderList(); renderPhone(S.msgs); renderCU(S.msgs);
+	}
+
+	let _dragMsgId = null;
+	function dragMsgStart(e, id) {
+	  _dragMsgId = id;
+	  e.currentTarget.classList.add('dragging');
+	  e.dataTransfer.effectAllowed = 'move';
+	}
+	function dragMsgOver(e) {
+	  e.preventDefault();
+	  e.dataTransfer.dropEffect = 'move';
+	}
+	function dropMsg(e, targetId) {
+	  e.preventDefault();
+	  if (_dragMsgId === null || _dragMsgId === targetId) return;
+	  const from = S.msgs.findIndex(m => m.id === _dragMsgId);
+	  const to = S.msgs.findIndex(m => m.id === targetId);
+	  if (from < 0 || to < 0) return;
+	  pushHistory();
+	  const [moved] = S.msgs.splice(from, 1);
+	  S.msgs.splice(to, 0, moved);
+	  _dragMsgId = null;
+	  renderList(); renderPhone(S.msgs); renderCU(S.msgs);
+	}
+	function dragMsgEnd(e) {
+	  e.currentTarget.classList.remove('dragging');
+	  _dragMsgId = null;
+	}
+
+	function importScript(replace) {
+	  const raw = document.getElementById('scriptImport')?.value || '';
+	  const lines = raw.split(/\n+/).map(l => l.trim()).filter(Boolean);
+	  if (!lines.length) { toast('Paste a script first'); return; }
+	  pushHistory();
+	  const imported = [];
+	  lines.forEach(line => {
+	    const parts = line.match(/^([^:]+):\s*(.+)$/);
+	    if (!parts) return;
+	    const name = parts[1].trim();
+	    const text = parts[2].trim();
+	    let speaker = S.spk.find(s => s.name.toLowerCase() === name.toLowerCase());
+	    if (!speaker) {
+	      if (S.spk.length >= 6) return;
+	      speaker = {
+	        id:S.nspk++, name, side:S.spk.length === 0 ? 'right' : 'left', avatar:null,
+	        grad: LEFT_PALETTES[Math.min(S.spk.filter(s => s.side === 'left').length, LEFT_PALETTES.length - 1)],
+	      };
+	      S.spk.push(speaker);
+	    }
+	    imported.push({ id:S.nid++, sid:speaker.id, text, time:S.msgs[S.msgs.length-1]?.time || '9:41 AM', delay:1.5 });
+	  });
+	  if (!imported.length) { toast('Use Speaker: message lines'); return; }
+	  S.msgs = replace ? imported : S.msgs.concat(imported);
+	  _firstMsgBaseTime = parseTime(S.msgs[0]?.time || '9:41 AM');
+	  renderSpkList(); renderList(); renderPhone(S.msgs); renderCU(S.msgs);
+	  toast(`${imported.length} message${imported.length!==1?'s':''} imported`);
+	}
 
 /* ══ TOGGLES ══ */
-function togOpt(k, el) {
-  S.opts[k] = !S.opts[k];
-  el.classList.toggle('on', S.opts[k]);
-  renderPhone(S.msgs); renderCU(S.msgs);
-}
+	function togOpt(k, el) {
+	  pushHistory();
+	  S.opts[k] = !S.opts[k];
+	  el.classList.toggle('on', S.opts[k]);
+	  renderPhone(S.msgs); renderCU(S.msgs);
+	}
 
-/* ══ PHONE RENDER ══ */
-function renderPhone(msgs, animate) {
-  const area = document.getElementById('pMsgs');
-  const isGroup = S.spk.length > 2;
-  let html = '<div class="p-date">iMessage · Today 9:41 AM</div>';
+	function updExport(key, val) {
+	  pushHistory();
+	  S.export[key] = val;
+	}
+
+	/* ══ PHONE RENDER ══ */
+	function renderPhone(msgs, animate) {
+	  const area = document.getElementById('pMsgs');
+	  const isGroup = S.spk.length > 2;
+	  const receipt = receiptText();
+	  let html = S.dateLabel ? `<div class="p-date">${esc(S.dateLabel)}</div>` : '';
 
   msgs.forEach((m, i) => {
     const s = spk(m.sid); if (!s) return;
     const side = s.side==='right' ? 'r' : 'l';
     const isLast = i === msgs.length-1;
     const doAnim = animate && isLast ? 'pop' : '';
-    const showDel = S.opts.del && s.side==='right' && isLast;
+	    const showDel = receipt && s.side==='right' && isLast;
     const showName = isGroup && s.side === 'left';
 
     html += `<div class="p-row ${side}">
@@ -1133,7 +1417,7 @@ function renderPhone(msgs, animate) {
       <div class="p-bwrap">
         ${showName ? `<div class="p-sname">${esc(s.name)}</div>` : ''}
         <div class="p-bub ${side} ${doAnim}">${esc(m.text)}</div>
-        ${S.opts.ts ? `<div class="p-meta">${m.time}${showDel ? ' · Delivered ✓':''}</div>` : ''}
+	        ${S.opts.ts ? `<div class="p-meta">${esc(m.time)}${showDel ? ` · ${esc(receipt)}`:''}</div>` : ''}
       </div>
     </div>`;
   });
@@ -1157,16 +1441,17 @@ function renderPhone(msgs, animate) {
 }
 
 /* ══ CLOSE-UP RENDER ══ */
-function renderCU(msgs, animate) {
-  const view = document.getElementById('closeupView');
-  let html = '';
+	function renderCU(msgs, animate) {
+	  const view = document.getElementById('closeupView');
+	  const receipt = receiptText();
+	  let html = S.dateLabel ? `<div class="p-date">${esc(S.dateLabel)}</div>` : '';
 
   msgs.forEach((m, i) => {
     const s = spk(m.sid); if (!s) return;
     const side = s.side==='right' ? 'r' : 'l';
     const isLast = i === msgs.length-1;
     const doAnim = animate && isLast ? 'pop' : '';
-    const showDel = S.opts.del && s.side==='right' && isLast;
+	    const showDel = receipt && s.side==='right' && isLast;
 
     html += `<div class="cu-grp ${side}">
       ${S.opts.av ? avHtml(s,'cu-av') : ''}
@@ -1174,8 +1459,8 @@ function renderCU(msgs, animate) {
         <div class="cu-who">${esc(s.name)}</div>
         <div class="cu-bub ${side} ${doAnim}">${esc(m.text)}</div>
         ${S.opts.ts ? `<div class="cu-meta">
-          <span>${m.time}</span>
-          ${showDel ? '<span style="color:#4A4A4A">Delivered ✓✓</span>' : ''}
+	          <span>${esc(m.time)}</span>
+	          ${showDel ? `<span style="color:#4A4A4A">${esc(receipt)}</span>` : ''}
         </div>` : ''}
       </div>
     </div>`;
@@ -1200,16 +1485,16 @@ function runPreview() {
   if (S.running) { stopPreview(); return; }
   if (!S.msgs.length) { toast('Add some messages first!'); return; }
 
-  S.running = true;
-  document.getElementById('btnGen').textContent = '⏹ Stop Preview';
+	  S.running = true;
+	  document.getElementById('btnGen').textContent = '⏹ Stop Animation';
   toast('▶ Playing preview…');
 
   const di = document.getElementById('pdi');
   di.classList.add('big');
   _timers.push(setTimeout(()=>di.classList.remove('big'), 900));
 
-  document.getElementById('pMsgs').innerHTML = '<div class="p-date">iMessage · Today 9:41 AM</div>';
-  document.getElementById('closeupView').innerHTML = '';
+	  document.getElementById('pMsgs').innerHTML = S.dateLabel ? `<div class="p-date">${esc(S.dateLabel)}</div>` : '';
+	  document.getElementById('closeupView').innerHTML = S.dateLabel ? `<div class="p-date">${esc(S.dateLabel)}</div>` : '';
 
   const revealed = [];
   let cursor = 300;
@@ -1232,7 +1517,7 @@ function runPreview() {
 
   _timers.push(setTimeout(() => {
     S.running = false;
-    document.getElementById('btnGen').textContent = '▶ Generate Preview';
+	    document.getElementById('btnGen').textContent = '▶ Play Animation';
     hideTyp();
     renderPhone(S.msgs);
     renderCU(S.msgs);
@@ -1242,8 +1527,8 @@ function runPreview() {
 
 function stopPreview() {
   _timers.forEach(clearTimeout); _timers = [];
-  S.running = false;
-  document.getElementById('btnGen').textContent = '▶ Generate Preview';
+	  S.running = false;
+	  document.getElementById('btnGen').textContent = '▶ Play Animation';
   hideTyp();
   renderPhone(S.msgs); renderCU(S.msgs);
   toast('⏹ Stopped');
@@ -1271,11 +1556,13 @@ function hideTyp() {
   document.getElementById('ctyp')?.remove();
 }
 
-function togPhoneUI(el) {
-  const body = document.querySelector('.p-body');
-  const isLight = body.classList.toggle('ui-light');
-  el.classList.toggle('on', isLight);
-}
+	function togPhoneUI(el) {
+	  pushHistory();
+	  const body = document.querySelector('.p-body');
+	  const isLight = body.classList.toggle('ui-light');
+	  S.uiLight = isLight;
+	  el.classList.toggle('on', isLight);
+	}
 
 /* ══ MOBILE SIDEBAR ══ */
 function toggleSidebar() {
@@ -1325,28 +1612,32 @@ function renderConvSlots() {
   container.innerHTML = html;
 }
 
-function saveConv(i) {
-  const slots = loadSlots();
-  slots[i] = {
-    spk: S.spk.map(s => ({ id:s.id, name:s.name, side:s.side, grad:s.grad, avatar:s.avatar })),
-    msgs: JSON.parse(JSON.stringify(S.msgs)),
-  };
-  saveSlots(slots);
-  renderConvSlots();
-  toast(`Saved to slot ${i+1} ✓`);
-}
+	function saveConv(i) {
+	  const slots = loadSlots();
+	  slots[i] = snap();
+	  saveSlots(slots);
+	  renderConvSlots();
+	  toast(`Saved to slot ${i+1} ✓`);
+	}
 
-function loadConv(i) {
-  const slots = loadSlots();
-  const slot = slots[i]; if (!slot) return;
-  S.spk = slot.spk;
-  S.msgs = slot.msgs;
-  S.nid = Math.max(...S.msgs.map(m=>m.id), 0) + 1;
-  S.nspk = Math.max(...S.spk.map(s=>s.id), 0) + 1;
-  _firstMsgBaseTime = parseTime(S.msgs[0]?.time || '9:41 AM');
-  renderSpkList(); renderList(); renderPhone(S.msgs); renderCU(S.msgs); renderConvSlots();
-  toast(`Loaded slot ${i+1} ✓`);
-}
+	function loadConv(i) {
+	  const slots = loadSlots();
+	  const slot = slots[i]; if (!slot) return;
+	  pushHistory();
+	  if (slot.spk && slot.msgs && !slot.opts) {
+	    S.spk = slot.spk;
+	    S.msgs = slot.msgs;
+	  } else {
+	    HISTORY_KEYS.forEach(k => {
+	      if (slot[k] !== undefined) S[k] = clone(slot[k]);
+	    });
+	  }
+	  S.nid = Math.max(...S.msgs.map(m=>m.id), 0) + 1;
+	  S.nspk = Math.max(...S.spk.map(s=>s.id), 0) + 1;
+	  _firstMsgBaseTime = parseTime(S.msgs[0]?.time || '9:41 AM');
+	  syncUIFromState();
+	  toast(`Loaded slot ${i+1} ✓`);
+	}
 
 function deleteConv(i) {
   const slots = loadSlots();
@@ -1438,7 +1729,7 @@ function onTpScroll(col) {
   _tpScrollTimers[col] = setTimeout(() => _commitTp(), 180);
 }
 
-function _commitTp() {
+	function _commitTp() {
   if (_tpMsgId === null) return;
   const hIdx = Math.min(11, Math.max(0, Math.round(document.getElementById('tpHour').scrollTop / 36)));
   const mIdx = Math.min(59, Math.max(0, Math.round(document.getElementById('tpMin').scrollTop  / 36)));
@@ -1446,10 +1737,57 @@ function _commitTp() {
   const timeStr = `${TP_HOURS[hIdx]}:${TP_MINS[mIdx]} ${TP_AMPM[aIdx]}`;
   updTime(_tpMsgId, timeStr);
   const inp = document.querySelector(`#mi${_tpMsgId} .mi-time`);
-  if (inp) inp.value = timeStr;
-}
+	  if (inp) inp.value = timeStr;
+	}
 
-/* ══ TOAST ══ */
+	async function downloadScreenshot() {
+	  const node = document.getElementById(S.mode === 'phone' ? 'phoneView' : 'closeupView');
+	  if (!node) return;
+	  const rect = node.getBoundingClientRect();
+	  const w = Math.round(rect.width);
+	  const h = Math.round(rect.height);
+	  if (!w || !h) { toast('Nothing to capture'); return; }
+
+	  let css = '';
+	  Array.from(document.styleSheets).forEach(sheet => {
+	    try {
+	      Array.from(sheet.cssRules || []).forEach(rule => css += rule.cssText + '\n');
+	    } catch {}
+	  });
+
+	  const cloneNode = node.cloneNode(true);
+	  cloneNode.style.width = w + 'px';
+	  cloneNode.style.height = h + 'px';
+	  cloneNode.style.display = getComputedStyle(node).display;
+	  const html = `<style>${css}</style>${new XMLSerializer().serializeToString(cloneNode)}`;
+	  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">
+	    <foreignObject width="100%" height="100%">${html}</foreignObject>
+	  </svg>`;
+	  const url = URL.createObjectURL(new Blob([svg], { type:'image/svg+xml;charset=utf-8' }));
+	  const img = new Image();
+	  img.onload = () => {
+	    const scale = Math.min(2, window.devicePixelRatio || 1);
+	    const canvas = document.createElement('canvas');
+	    canvas.width = w * scale;
+	    canvas.height = h * scale;
+	    const ctx = canvas.getContext('2d');
+	    ctx.scale(scale, scale);
+	    ctx.drawImage(img, 0, 0);
+	    URL.revokeObjectURL(url);
+	    const a = document.createElement('a');
+	    a.download = `text-simulator-${S.mode}.png`;
+	    a.href = canvas.toDataURL('image/png');
+	    a.click();
+	    toast('Screenshot saved');
+	  };
+	  img.onerror = () => {
+	    URL.revokeObjectURL(url);
+	    toast('Screenshot failed in this browser');
+	  };
+	  img.src = url;
+	}
+
+	/* ══ TOAST ══ */
 let _tt = null;
 function toast(msg) {
   const el = document.getElementById('toastEl');
