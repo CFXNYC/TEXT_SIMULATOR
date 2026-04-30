@@ -316,22 +316,9 @@
     #phoneView.bg-white .p-shell, #closeupView.bg-white .p-shell,
     #phoneView.bg-green .p-shell, #closeupView.bg-green .p-shell { filter: none; }
 
-    /* flat backgrounds: extend color across entire app — no visible container edges */
-    #app.app-bg-white { --flat-bg: #FFFFFF; }
-    #app.app-bg-green { --flat-bg: #00b140; }
-    #app.app-bg-white .hdr,
-    #app.app-bg-white .foot,
-    #app.app-bg-white .main,
-    #app.app-bg-white .sb,
-    #app.app-bg-white .pv-center,
-    #app.app-bg-green .hdr,
-    #app.app-bg-green .foot,
-    #app.app-bg-green .main,
-    #app.app-bg-green .sb,
-    #app.app-bg-green .pv-center {
-      background: var(--flat-bg);
-      border-color: transparent;
-    }
+    /* flat backgrounds: fill preview area only — sidebar/header/footer unchanged */
+    #app.app-bg-white .pv-center { background: #FFFFFF; }
+    #app.app-bg-green .pv-center { background: #00b140; }
 
 	    .p-shell {
 	      filter: drop-shadow(0 40px 80px rgba(0,0,0,.92)) drop-shadow(0 0 80px rgba(0,0,0,.5));
