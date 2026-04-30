@@ -312,6 +312,27 @@
     #phoneView.bg-white, #closeupView.bg-white { background: #FFFFFF; }
     #phoneView.bg-green, #closeupView.bg-green { background: #00b140; }
 
+    /* no shadow halo on flat/chromakey backgrounds */
+    #phoneView.bg-white .p-shell, #closeupView.bg-white .p-shell,
+    #phoneView.bg-green .p-shell, #closeupView.bg-green .p-shell { filter: none; }
+
+    /* flat backgrounds: extend color across entire app — no visible container edges */
+    #app.app-bg-white { --flat-bg: #FFFFFF; }
+    #app.app-bg-green { --flat-bg: #00b140; }
+    #app.app-bg-white .hdr,
+    #app.app-bg-white .foot,
+    #app.app-bg-white .main,
+    #app.app-bg-white .sb,
+    #app.app-bg-white .pv-center,
+    #app.app-bg-green .hdr,
+    #app.app-bg-green .foot,
+    #app.app-bg-green .main,
+    #app.app-bg-green .sb,
+    #app.app-bg-green .pv-center {
+      background: var(--flat-bg);
+      border-color: transparent;
+    }
+
 	    .p-shell {
 	      filter: drop-shadow(0 40px 80px rgba(0,0,0,.92)) drop-shadow(0 0 80px rgba(0,0,0,.5));
 	      transform: scale(var(--phone-scale, 1.18));
@@ -1030,6 +1051,9 @@ const S = {
 	  const cv = document.getElementById('closeupView');
 	  if (pv) { pv.className = `bg-${S.bg}`; pv.style.display = S.mode === 'phone' ? 'flex' : 'none'; }
 	  if (cv) { cv.className = `bg-${S.bg}`; cv.style.display = S.mode === 'closeup' ? 'flex' : 'none'; }
+	  const app = document.getElementById('app');
+	  app.classList.remove('app-bg-white', 'app-bg-green');
+	  if (S.bg === 'white' || S.bg === 'green') app.classList.add(`app-bg-${S.bg}`);
 	  document.querySelectorAll('.bg-sw').forEach(sw => sw.classList.remove('on'));
 	  const bgSw = document.querySelector(`.bg-sw-${S.bg}`);
 	  bgSw?.classList.add('on');
@@ -1084,6 +1108,9 @@ const BG_LABELS = { dark:'Cinematic Dark', black:'Pure Black', white:'Pure White
   const cvDisplay = cv.style.display;
   cv.className = `bg-${val}`;
   cv.style.display = cvDisplay;
+  const app = document.getElementById('app');
+  app.classList.remove('app-bg-white', 'app-bg-green');
+  if (val === 'white' || val === 'green') app.classList.add(`app-bg-${val}`);
 }
 
 /* ══ SPEAKERS ══ */
