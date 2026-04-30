@@ -524,7 +524,7 @@
     .foot {
       height:var(--fh); background:var(--panel);
       border-top:1px solid var(--b);
-      display:flex; align-items:center; padding:0 20px; gap:20px; flex-shrink:0;
+      display:flex; align-items:center; justify-content:center; padding:0 20px; gap:20px; flex-shrink:0;
     }
     .foot-lbl { font-size:9px; font-weight:700; color:var(--t3); text-transform:uppercase; letter-spacing:1px; }
     .foot-grp { display:flex; align-items:center; gap:7px; }
@@ -536,7 +536,7 @@
     }
     .foot-sel:focus { border-color:var(--t2); }
     .foot-note { margin-left:auto; font-size:10px; color:var(--t3); text-align:right; line-height:1.5; }
-    .foot-actions { display:flex; align-items:center; gap:8px; margin-left:auto; }
+    .foot-actions { display:flex; align-items:center; gap:8px; }
     .foot-toggle { margin-left:0; }
 	    .rnd-btn {
 	      background:var(--accent); color:#1a1a1a; border:none;
@@ -691,10 +691,11 @@
       .hdr .btn-dl { display:none; }
 
       /* Footer compact */
-      .foot { flex-wrap:wrap; height:auto; padding:8px 12px; gap:8px; min-height:var(--fh); }
+      .foot { flex-wrap:wrap; height:auto; padding:8px 12px; gap:8px; min-height:var(--fh); justify-content:center; }
       .foot-note { display:none; }
-      .foot-actions { margin-left:0; flex-wrap:wrap; }
-      .foot-lbl { width:100%; margin-bottom:0; }
+      .foot-actions { margin-left:0; flex-wrap:wrap; justify-content:center; }
+      .foot-lbl { width:100%; margin-bottom:0; text-align:center; }
+      .foot-toggle { justify-content:center; }
       .rnd-btn { padding:8px 14px; font-size:12px; }
 
       /* Message input row — let it wrap so nothing squishes */
